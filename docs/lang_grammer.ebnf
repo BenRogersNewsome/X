@@ -1,0 +1,49 @@
+letter = "A" | "B" | "C" | "D" | "E" | "F" | "G"
+       | "H" | "I" | "J" | "K" | "L" | "M" | "N"
+       | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
+       | "V" | "W" | "X" | "Y" | "Z" | "a" | "b"
+       | "c" | "d" | "e" | "f" | "g" | "h" | "i"
+       | "j" | "k" | "l" | "m" | "n" | "o" | "p"
+       | "q" | "r" | "s" | "t" | "u" | "v" | "w"
+       | "x" | "y" | "z" ;
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+name = { letter | '_' };
+symbol = letter, ['_', name];
+
+structure definition = 'struct', name, "(", symbol, ")", ['over', { name, "(", symbol, ")"], '{'
+
+'}';
+
+structure creation = 'create', name, name
+
+symbol creation = 'let', symbol, {',', symbol}, 'in', name, ['where', 
+
+operator =  {'*'} | {'+'} | {'-'} | {'/'} |  {'.'} | {','} | {'!'} | {'^'};
+
+(* Expression grammer *)
+
+
+
+expression =    symbol
+            |   infix_binary
+            |   postfix_unary
+            |   grouping;
+
+grouping = '(', expression, ')'
+postfix_unary = expression, operator
+infix_binary = expression, operator, expression
+
+(* Binary operations in order of precedence *)
+
+equality
+
+term = (term, ({'+'} | {'-'}), comma) | comma;
+comma = (comma, {','}, dot) | dot
+dot = (dot, {'.'}, factor) | factor
+factor = (factor, ({'*'} | {'/'}), power) | power;
+power = (power, {'^'}, unary) | unary
+
+unary = (operator, unary) | primary;
+
+primary = symbol | "(", expression, ")";
