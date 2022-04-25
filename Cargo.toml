@@ -7,3 +7,10 @@ edition = "2021"
 
 [dependencies]
 phf = { version = "0.10", features=["macros"] }
+regex = "1"
+onig = {version = "6"}
+lazy_static = "1.4.0"
+fancy-regex = "0.8.0"
+handlebars = "4.2.2"
+serde_json = "1.0.59"
+log = "0.4"
