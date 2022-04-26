@@ -1,8 +1,9 @@
 use super::super::tree::TreeNode;
 
-#[derive(PartialEq, Eq, Debug, Clone)]
-pub struct Operator {
-    pub label: u8
+#[derive(PartialEq, Debug, Clone)]
+pub enum Operator {
+    Binary(BinaryOperator),
+    Chain(ChainOperator),
 }
 
 impl TreeNode for Operator {

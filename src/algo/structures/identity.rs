@@ -1,6 +1,7 @@
 use super::tree::{Tree, Node};
 use super::nodes::{Operator, IdentityLeafNode};
 
+#[derive(Clone, Debug)]
 pub struct IdentityExpression{
     tokens: Vec<Node<IdentityLeafNode, Operator>>,
 }
@@ -39,6 +40,7 @@ impl<Idx> std::ops::Index<Idx> for IdentityExpression where Idx: std::slice::Sli
     }
 }
 
+#[derive(Debug)]
 pub struct Identity(pub IdentityExpression, pub IdentityExpression);
 
 #[macro_export]

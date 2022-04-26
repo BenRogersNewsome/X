@@ -1,7 +1,7 @@
 use super::super::tree::TreeNode;
 use super::element::Element;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum IdentityLeafNode {
     Element(Element),
     Subtree(Element)
