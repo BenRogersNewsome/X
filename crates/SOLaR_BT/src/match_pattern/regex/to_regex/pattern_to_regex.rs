@@ -1,7 +1,9 @@
 use std::slice::Iter;
 use super::super::TreeParseError;
-use super::super::super::super::pattern::{Pattern, PatternLeaf};
-use super::super::super::super::tree::{Node, TreeNode};
+use crate::{
+    tree::{Node, TreeNode},
+    pattern::{Pattern, PatternLeaf},
+};
 use super::tree_to_regex::internal_to_regex;
 
 

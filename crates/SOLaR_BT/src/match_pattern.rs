@@ -1,11 +1,11 @@
 use onig::{Regex, RegexOptions, Syntax};
 use handlebars::Handlebars;
 use serde_json::Value;
-use super::pattern::Pattern;
+use crate::pattern::Pattern;
 
 mod regex;
 use self::regex::Regexable;
-use super::tree::{TreeNode, Tree};
+use crate::tree::{TreeNode, Tree};
 
 pub fn replace_identity<
         'a,

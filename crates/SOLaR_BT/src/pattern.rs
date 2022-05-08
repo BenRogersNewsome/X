@@ -1,4 +1,4 @@
-use super::tree::{TreeNode, Tree};
+use crate::tree::{TreeNode, Tree};
 
 pub enum PatternLeaf<L: TreeNode> {
     Literal(L),

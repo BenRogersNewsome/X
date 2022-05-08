@@ -1,5 +1,5 @@
 use std::slice::Iter;
-use super::super::super::super::tree::{Node, Tree, TreeNode};
+use crate::tree::{Node, Tree, TreeNode};
 
 pub fn tree_to_regex<T: Tree>(tree: T) -> Result<String, &'static str> {
     _tree_to_regex::<T>(&mut tree.iter())

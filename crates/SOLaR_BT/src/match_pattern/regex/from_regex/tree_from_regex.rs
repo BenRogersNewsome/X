@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 use onig::{Regex, RegexOptions, Syntax};
 use super::super::RegexParseError;
-use super::super::super::super::tree::{Tree, ParsableTreeNode, Node};
+use crate::tree::{Tree, ParsableTreeNode, Node};
 
 const GLOBAL_REGEX: &'static str = r"^(?<op>[+*])\((?<one>[+*]\(\g<one>\)\(\g<one>\)|[a-z])\)\((?<two>[+*]\(\g<two>\)\(\g<two>\)|[a-z])\)$|^(?<el>[a-z])$";  // PITA
 
