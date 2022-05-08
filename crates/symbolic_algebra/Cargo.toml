@@ -1,5 +1,5 @@
 [package]
-name = ""
+name = "symbolic_algebra"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,4 +9,4 @@ crate-type=["lib"]
 [dependencies]
 log = "0.4"
 env_logger = "0.9.0"
-solar = { path = "../SOLaR_BT" }
+solar_bt = { path = "../SOLaR_BT" }
