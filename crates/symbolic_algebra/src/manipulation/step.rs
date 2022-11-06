@@ -1,9 +1,7 @@
-use crate::algo::structures::Expression;
+use super::{manipulation::Manipulation, Manipulatable};
 
-use super::manipulation::Manipulation;
-
-pub enum Step<'a> {
-    Expression(Expression),
-    Manipulation(Manipulation<'a>),
+pub enum Step<'a, T: Manipulatable<'a>> {
+    Expression(T),
+    Manipulation(Manipulation<'a, T>),
 }
 

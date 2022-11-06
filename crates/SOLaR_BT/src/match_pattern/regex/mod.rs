@@ -1,9 +1,19 @@
-pub mod to_regex {
-    mod tree_to_regex;
-    mod pattern_to_regex;
-    mod replacement_to_regex;
+mod to_regex {
+    pub mod tree_to_regex;
+    pub mod pattern_to_regex;
+    pub mod replacement_to_regex;
     mod regex;
 }
+
+pub use to_regex::tree_to_regex::tree_to_regex;
+pub use to_regex::pattern_to_regex::pattern_to_regex;
+pub use to_regex::replacement_to_regex::replacement_to_regex;
+
+mod from_regex {
+    pub mod tree_from_regex;
+}
+
+pub use from_regex::tree_from_regex::tree_from_regex;
 
 #[derive(Debug, PartialEq)]
 pub enum RegexParseError {
@@ -12,21 +22,5 @@ pub enum RegexParseError {
 
 #[derive(Debug, PartialEq)]
 pub enum TreeParseError {
-    UnableToParseTree,
     InvalidWildcard,
-}
-
-mod from_regex {
-    mod tree_from_regex;
-
-    pub use tree_from_regex::tree_from_regex;
-}
-
-
-pub trait Regexable {
-
-    type Output;
-
-    fn to_regex(&self) -> Result<Self::Output, TreeParseError>;
-    fn from_regex<'a>(regex: &'a str) -> Result<Self, RegexParseError> where Self: Sized;
 }

@@ -1,40 +1,12 @@
-use crate::algo::trees::{Tree, Node};
-use super::nodes::{BinaryOperator, IdentityLeafNode};
-use crate::algo::patterns::{PatternLeaf};
+use solar_bt::{Node, PatternLeaf};
+use super::nodes::BinaryOperator;
 use super::nodes::Element;
 
-#[derive(Clone, Debug)]
-pub struct ExpressionPattern{
-    tokens: Vec<Node<PatternLeaf<Element>, BinaryOperator>>,
-}
+use super::token_tree::TokenTree;
 
-impl Tree for ExpressionPattern {
-    type L = IdentityLeafNode;
-    type I = BinaryOperator;
+pub type ExpressionPattern = TokenTree<PatternLeaf<Element>, BinaryOperator>;
 
-    fn new(tokens: Vec<Node<IdentityLeafNode, BinaryOperator>>) -> Self {
-        Self {
-            tokens
-        }
-    }
-
-    #[inline(always)]
-    fn tokens(&self) -> &Vec<Node<IdentityLeafNode, BinaryOperator>> {
-        &self.tokens
-    }
-
-    #[inline(always)]
-    fn tokens_mut(&mut self) -> &mut Vec<Node<IdentityLeafNode, BinaryOperator>> {
-        &mut self.tokens
-    }
-
-    #[inline(always)]
-    fn into_tokens(self) -> Vec<Node<IdentityLeafNode, BinaryOperator>> {
-        self.tokens
-    }
-}
-
-impl<Idx> std::ops::Index<Idx> for ExpressionPattern where Idx: std::slice::SliceIndex<[Node<IdentityLeafNode, BinaryOperator>]> {
+impl<Idx> std::ops::Index<Idx> for ExpressionPattern where Idx: std::slice::SliceIndex<[Node<PatternLeaf<Element>, BinaryOperator>]> {
     type Output = Idx::Output;
 
     fn index(&self, index: Idx) -> &Self::Output {
@@ -42,7 +14,10 @@ impl<Idx> std::ops::Index<Idx> for ExpressionPattern where Idx: std::slice::Slic
     }
 }
 
-#[derive(Debug)]
+/// An identity contains two patterns, one is the matcher and the other the replacement, respectively.
+///
+/// Identities are assumed to be reversible.
+#[derive(Debug, Clone)]
 pub struct Identity(pub ExpressionPattern, pub ExpressionPattern);
 
 impl Identity {
@@ -51,41 +26,80 @@ impl Identity {
     }
 }
 
+impl ToString for Identity {
+    fn to_string(&self) -> String {
+        let left: String = self.0.to_string();
+        let right: String = self.1.to_string();
+        format!("{} = {}", left, right)
+    }
+}
+
+impl Into<(ExpressionPattern, ExpressionPattern)> for Identity {
+    fn into(self) -> (ExpressionPattern, ExpressionPattern) {
+        (self.0, self.1)
+    }
+}
+
+impl<'a> Into<(&'a ExpressionPattern, &'a ExpressionPattern)> for &'a Identity {
+    fn into(self) -> (&'a ExpressionPattern, &'a ExpressionPattern) {
+        (&self.0, &self.1)
+    }
+}
+
+/// Create identity_expressions, similar to how vec! works, only `Leaf()` and `Internal()` may be ommitted from the vec members, as they will be added automatically.
+/// When code is compiled with the -O flag, this macro leads to no runtime performance impact.
 #[macro_export]
 macro_rules! identity_expression {
     ($($x:expr),+ $(,)?) => {{
-        use $crate::algo::structures::{ExpressionPattern, IdentityLeafNode, IdentityLeafNode::*, BinaryOperator, Element};
-        use $crate::algo::trees::{Tree, Node};
+        use $crate::structures::{ExpressionPattern, Element, BinaryOperator};
+        use solar_bt::{Node, PatternLeaf};
 
         pub trait Wrapped {
-            fn to_wrapped(self) -> Node<IdentityLeafNode, BinaryOperator>;
+            fn get_wrapped(self) -> Node<PatternLeaf<Element>, BinaryOperator>;
         }
 
-        impl Wrapped for IdentityLeafNode {
+        impl Wrapped for PatternLeaf<Element> {
             #[inline(always)]
-            fn to_wrapped(self) -> Node<IdentityLeafNode, BinaryOperator> {
+            fn get_wrapped(self) -> Node<PatternLeaf<Element>, BinaryOperator> {
                 return Node::Leaf(self)
             }
         }
 
         impl Wrapped for BinaryOperator {
             #[inline(always)]
-            fn to_wrapped(self) -> Node<IdentityLeafNode, BinaryOperator> {
+            fn get_wrapped(self) -> Node<PatternLeaf<Element>, BinaryOperator> {
                 return Node::Internal(self)
             }
         }
-        ExpressionPattern::new(vec![$($x.to_wrapped()),+])
+        ExpressionPattern::new(vec![$(($x).get_wrapped()),+])
     }}
 }
 
-/// When compiled with the -O flag, this macro leads to no runtime performance impact
-#[macro_export]
-macro_rules! identity {
-    ($($left:expr),+ $(,)?; $($right:expr),+ $(,)?) => {{
-        use crate::identity_expression;
-        Identity(
-            identity_expression![$($left),+],
-            identity_expression![$($right),+],
-        )
-    }}
+pub(crate) use identity_expression;
+
+
+#[cfg(test)]
+mod test_macros {
+
+    use crate::structures::{Element, BinaryOperator};
+    use solar_bt::{Node, PatternLeaf};
+
+    #[test]
+    fn test_create_identity_expression() {
+        let plus = BinaryOperator::new(b'+');
+        let a = Element::new(b"a");
+        let b = String::from("b");
+
+        let expression = identity_expression![
+            plus,
+            PatternLeaf::Literal(a.clone()),
+            PatternLeaf::Subtree(b.clone()),
+        ];
+
+        assert_eq!(*expression, vec![
+            Node::Internal(plus),
+            Node::Leaf(PatternLeaf::Literal(a)),
+            Node::Leaf(PatternLeaf::Subtree(b)),
+        ]);
+    }
 }

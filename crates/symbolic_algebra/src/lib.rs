@@ -1,1 +1,3 @@
-use solar_bt;
+mod manipulation;
+mod simplification;
+mod structures;

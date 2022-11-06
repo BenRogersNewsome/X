@@ -3,9 +3,9 @@ use onig::{Regex, RegexOptions, Syntax};
 use super::super::RegexParseError;
 use crate::tree::{Tree, ParsableTreeNode, Node};
 
-const GLOBAL_REGEX: &'static str = r"^(?<op>[+*])\((?<one>[+*]\(\g<one>\)\(\g<one>\)|[a-z])\)\((?<two>[+*]\(\g<two>\)\(\g<two>\)|[a-z])\)$|^(?<el>[a-z])$";  // PITA
+const GLOBAL_REGEX: &str = r"^(?<op>[+*])\((?<one>[+*]\(\g<one>\)\(\g<one>\)|[a-z])\)\((?<two>[+*]\(\g<two>\)\(\g<two>\)|[a-z])\)$|^(?<el>[a-z])$";  // PITA
 
-pub fn tree_from_regex<'a, T: Tree>(expression_string: &'a str) -> Result<T, RegexParseError> where T::I: ParsableTreeNode, T::L: ParsableTreeNode {
+pub fn tree_from_regex<T: Tree>(expression_string: &str) -> Result<T, RegexParseError> where T::I: ParsableTreeNode, T::L: ParsableTreeNode {
     lazy_static! {
         static ref GLOBAL_PATTERN: Regex = Regex::with_options(
             GLOBAL_REGEX,
@@ -13,37 +13,29 @@ pub fn tree_from_regex<'a, T: Tree>(expression_string: &'a str) -> Result<T, Reg
             Syntax::default(),
         ).unwrap();
     }
-
     let caps = GLOBAL_PATTERN.captures(expression_string).unwrap();
-    match caps.at(1) {
-        Some(x) => {
-            
-            let left = tree_from_regex::<T>(caps.at(2).unwrap()).unwrap(); // Push on the left subtree
-            let right = tree_from_regex::<T>(caps.at(3).unwrap()).unwrap(); // Push on the right subtree
-            
-            let first = T::join(
-                T::I::from_string(x),
-                left,
-                right
-            );
+    if let Some(x) = caps.at(1) {       
+        let left = tree_from_regex::<T>(caps.at(2).unwrap()).unwrap(); // Push on the left subtree
+        let right = tree_from_regex::<T>(caps.at(3).unwrap()).unwrap(); // Push on the right subtree
+        
+        let first = T::join(
+            T::I::from_string(x).unwrap(),
+            left,
+            right
+        );
 
-            return Ok(first);
-        },
-        None => {},
+        return Ok(first);
     };
 
-    match caps.at(4) {
-        Some(x) => {
-            let first = T::new(vec![
-                Node::Leaf(T::L::from_string(x)),
-            ]);
+    if let Some(x) = caps.at(4) {
+        let first = T::new(vec![
+            Node::Leaf(T::L::from_string(x).unwrap()),
+        ]);
 
-            return Ok(first);
-        },
-        None => {},
+        return Ok(first);
     };
 
-    return Err(RegexParseError::UnableToParseRegex);
+    Err(RegexParseError::UnableToParseRegex)
 }
 
 // #[cfg(test)]

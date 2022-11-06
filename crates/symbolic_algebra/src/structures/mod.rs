@@ -1,20 +1,23 @@
 mod nodes {
     mod binary_operator;
     mod element;
-    mod identity_leaf_node;
     
     pub use element::Element;
-    pub use identity_leaf_node::IdentityLeafNode;
     pub use binary_operator::BinaryOperator;
 }
 
+use env_logger;
+
+mod token_tree;
+
 pub mod algebras;
+#[macro_use]
 mod expression;
+#[macro_use]
 mod identity;
 mod algebra;
 
-// pub use algebra::Algebra;
+pub use algebra::Algebra;
 pub use expression::Expression;
 pub use identity::{Identity, ExpressionPattern};
-pub use nodes::{Element, BinaryOperator, IdentityLeafNode};
-pub use algebra::Algebra;
+pub use nodes::{Element, BinaryOperator};

@@ -1,5 +1,4 @@
-use crate::algo::patterns::Pattern;
-use crate::algo::structures::ExpressionPattern;
+use crate::structures::ExpressionPattern;
 
 /// A statement of how an expression might be simplified, expressed as one or more patterns followed by a general replacement.
 /// 

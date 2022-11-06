@@ -2,6 +2,10 @@ mod tree;
 mod pattern;
 mod match_pattern;
 
-pub use tree::{TreeNode, Tree, Node};
-pub use pattern::{Pattern, PatternLeaf};
-pub use match_pattern::replace_identity;
+#[cfg(test)]
+mod test_utils;
+
+// Public exports
+pub use tree::{TreeNode, Tree, Node, ParsableTreeNode};
+pub use pattern::PatternLeaf;
+pub use match_pattern::{replace_identity, try_replace_identity, ReplacementError};

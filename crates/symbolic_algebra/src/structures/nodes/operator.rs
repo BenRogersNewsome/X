@@ -1,4 +1,4 @@
-use super::super::tree::TreeNode;
+use solar_bt::{TreeNode};
 use super::binary_operator::BinaryOperator;
 use super::chain_operator::ChainOperator;
 
