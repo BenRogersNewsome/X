@@ -1,7 +1,7 @@
 use onig::{Regex, RegexOptions, Syntax};
 use handlebars::Handlebars;
 use serde_json::Value;
-use crate::{PatternLeaf, pattern};
+use crate::PatternLeaf;
 
 use self::regex::{tree_to_regex, pattern_to_regex, tree_from_regex, replacement_to_regex};
 use crate::tree::{ParsableTreeNode, Tree};

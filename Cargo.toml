@@ -3,4 +3,5 @@
 members = [
     "crates/SOLaR_BT",
     "crates/symbolic_algebra",
+    "crates/ZSFT",
 ]

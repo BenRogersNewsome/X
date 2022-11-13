@@ -6,6 +6,14 @@ mod nodes {
     pub use binary_operator::BinaryOperator;
 }
 
+mod sets {
+    mod cardinality;
+    mod operation;
+    mod set;
+    mod set_element;
+    mod context;
+}
+
 use env_logger;
 
 mod token_tree;
