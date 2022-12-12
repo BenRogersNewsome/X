@@ -9,6 +9,6 @@ pub struct Create {
 
 impl Node for Create {
     fn to_str(&self) -> String {
-        "CREATE"
+        String::from("CREATE")
     }
 }

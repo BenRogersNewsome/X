@@ -1,35 +1,26 @@
-use super::tokens::Token;
-use super::tokens::TokenType;
-use crate::core::Stream;
+use std::{iter::{Iterator, Peekable}};
+use crate::lang::tokens::Token;
 
-pub struct TokenStream<'a> {
-    tokens: &'a Vec<Token>,
-    pos: usize,
+pub struct TokenStream {
+    upstream_next: Box<dyn Fn() -> Option<Token>>,
 }
 
-impl Stream<Token> for TokenStream<'_> {
+impl Iterator for TokenStream {
 
-    fn next(&mut self) -> Token {
-        let token = self.tokens.get(self.pos).unwrap().clone();
-        self.pos += 1;
-        
-        return token;
+    type Item = Token;
+
+    fn next(&mut self) -> Option<Token> {
+        (self.upstream_next)()
     }
 
-    fn peek<'a>(&self) -> Token {
-        self.tokens.get(self.pos).unwrap().clone()
-    }
-
-    fn is_end(self) -> bool {
-        matches!(self.tokens.get(self.pos).unwrap().token_type, TokenType::EOF)
-    }
 }
 
-impl TokenStream<'_> {
-    pub fn new(tokens: &Vec<Token>) -> TokenStream {
-        TokenStream {
-            tokens,
-            pos: 0,
-        }
+impl TokenStream {
+    pub fn new(next: Box<dyn Fn() -> Option<Token>>) -> Peekable<Self> {
+        let iter = Self {
+            upstream_next: next,
+        };
+
+        iter.peekable()
     }
 }

@@ -1,32 +1,50 @@
-use super::Node;
-use super::NonTerminalNode;
+mod math_expression;
 
-mod math_expression {
-    mod infix_binary;
-    mod postfix_unary;
-    mod math_expression;
-    mod primary;
+mod let_;
+// mod create;
+// mod definition;
+// mod equation;
+mod identifier;
+mod structure_definition;
+mod symbol;
 
-    pub use math_expression::MathExpression;
-    pub use infix_binary::{InfixBinary, binary_operator};
-    pub use postfix_unary::{PostfixUnary, match_postfix_unary_operator};
-    pub use primary::primary;
+pub mod common;
+
+use std::iter::Peekable;
+
+pub use let_::Let;
+pub use identifier::Identifier;
+pub use math_expression::MathExpression;
+pub use structure_definition::StructDefinition;
+pub use symbol::Symbol;
+
+pub trait TopLevelNode {
+    fn new<'a, T: Iterator<Item = Token>>(tokens: &'a mut Peekable<T>) -> Result<Box<Self>, NodeParseError>;
+
+    fn visit<'a, 'b: 'a>(self, scope: &'a mut Scope) -> Result<(), ()>;
 }
 
-mod _let;
-mod create;
-mod definition;
-mod identifier;
-mod infix_binary;
-mod math_expression;
-mod math_operator;
-mod postfix_unary;
+macro_rules! expect_token {
+    ($tokens:ident, $token:ident) => {
+        match $tokens.next() {
+            Some(Token::$token) => {},
+            Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![Token::$token])),
+            _ => return Err(NodeParseError::UnexpectedEndOfInput),
+        }; 
+    };
+}
 
-use _let::Let;
-use create::Create;
-use definition::Definition;
-use identifier::Identifier;
-use infix_binary::InfixBinary;
-use math_expression::MathExpression;
-use math_operator::MathOperator;
-use postfix_unary::PostfixUnary;
+macro_rules! skip_whitespace {
+    ($tokens:ident) => {
+        while $tokens.peek() == Some(&Token::Newline) {
+            $tokens.next();
+        };
+    };
+}
+
+pub(super) use expect_token;
+pub(super) use skip_whitespace;
+
+use crate::{lang::tokens::Token, scope::Scope};
+
+use super::ast::NodeParseError;

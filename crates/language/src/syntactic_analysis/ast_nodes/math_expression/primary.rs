@@ -1,20 +1,27 @@
+use std::iter::Peekable;
+
+use crate::lang::tokens::Token;
+use crate::syntactic_analysis::ast::NodeParseError;
 use super::MathExpression;
 use super::super::Identifier;
-use crate::core::Stream;
-use crate::lexical_analysis::tokens::Token;
-use crate::lexical_analysis::tokens::TokenType;
 
-pub fn primary(tokens: &mut dyn Stream<Token>) {
-    match tokens.peek().token_type {
-        TokenType::Identifier => return Ok(Identifier::new(tokens)),
-        TokenType::LeftParen => tokens.next(),
-        _ => return Err()
-    };
+pub fn primary<'a, T: Iterator<Item = Token>>(tokens: &'a mut Peekable<T>) -> Result<Box<MathExpression>, NodeParseError> {
 
-    let expression = MathExpression::new(tokens);
+    if let Some(&Token::LeftParen) = tokens.peek() {
+        tokens.next();
+        let expression = MathExpression::new(tokens)?;
     
-    match tokens.peek().token_type {
-        TokenType::RightParen => return Ok(expression),
-        _ => return Err()
-    };
+        match tokens.next() {
+            Some(Token::RightParen) => return Ok(expression),
+            Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![Token::RightParen])),
+            None => return Err(NodeParseError::UnexpectedEndOfInput),
+        };
+    }else {
+        return Ok(
+            Box::new(
+                MathExpression::Identifier(*Identifier::new(tokens)?)
+            )
+        )
+    }
+    
 }

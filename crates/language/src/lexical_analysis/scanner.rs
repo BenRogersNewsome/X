@@ -1,22 +1,24 @@
-use super::tokens::*;
+use std::iter::Peekable;
+use std::sync::{Arc, Mutex};
+use crate::lang::tokens::{Token, single_character_token, keyword};
 use crate::lang::characters::*;
 use crate::input::InputStream;
+use super::token_stream::TokenStream;
 
-pub fn get_tokens(stream: &mut InputStream) -> Vec<Token> {
+pub fn get_tokens(stream: InputStream) -> Peekable<TokenStream>{
 
-    let mut tokens: Vec<Token> = vec![];
+    // TODO: Fix this chicanery
+    let stream_mut = Arc::new(Mutex::new(stream));
 
-    while match tokens.last() {
-        None => true,
-        Some(x) => match x.token_type {
-            TokenType::EOF => false,
-            _ => true,
+    let next: Box<dyn Fn() -> Option<Token>> = Box::new(move|| {
+        let mut mut_ref = stream_mut.lock().unwrap();
+        match scan_for_token(&mut mut_ref) {
+            Token::EOF => None,
+            x => Some(x),
         }
-    } {
-        tokens.push(scan_for_token(stream));
-    }
+    });
     
-    return tokens;
+    TokenStream::new(next)
 }
 
 pub fn scan_for_token<'a>(stream: &'a mut InputStream) -> Token {
@@ -25,24 +27,26 @@ pub fn scan_for_token<'a>(stream: &'a mut InputStream) -> Token {
 }
 
 pub fn skip_whitespace(stream: &mut InputStream) {
-    while !stream.is_end() && stream.peek() == b' '{
+    while stream.peek() == Some(b' '){
         stream.skip();
     }
 }
 
 pub fn match_non_whitespace_token<'a>(stream: &'a mut InputStream) -> Token {
 
-    if stream.is_end() {
-        return Token {
-            token_type: TokenType::EOF,
-            lexeme: vec![b' '],
-        }
-    }
+    let current_char = match stream.next() {
+        Some(x) => x,
+        None => return Token::EOF,
+    };
 
-    let current_char = stream.next();
-
-    match match_single_character_token(current_char, stream) {
-        Some(x) => return x,
+    match match_single_character_token(current_char, stream.peek()) {
+        Some((x, used_next)) => {
+            if used_next {
+                stream.next();
+            };
+            stream.get();
+            return x
+        },
         None => ()
     };
 
@@ -51,38 +55,79 @@ pub fn match_non_whitespace_token<'a>(stream: &'a mut InputStream) -> Token {
         None => ()
     };
 
-    panic!()
+    panic!("Can't parse {:?}", String::from_utf8_lossy(stream.get()))
 }
 
-fn match_single_character_token(character: u8, stream: &mut InputStream) -> Option<Token> {
-    match single_character_token(character) {
-        Some(x) => Some(Token {
-            token_type: x,
-            lexeme: stream.get().to_vec(),
-        }),
-        None => None,
-    }
+fn match_single_character_token(character: u8, next: Option<u8>) -> Option<(Token, bool)> {
+    if let Some(x) = single_character_token(character, next) {
+        return Some(x);
+    };
+
+    None
 }
 
 fn match_identifier(character: u8, stream: &mut InputStream) -> Option<Token> {
 
-    if !is_alpha(character){
+    if !is_alpha_num(character){
         return None;
     }
 
-    while !stream.is_end() && is_alpha_or_underscore(stream.peek()) {
+    while is_alpha_num_or_underscore(stream.peek()) {
         stream.next();
     }
 
     let lexeme = stream.get();
 
-    let token_type = match keyword(lexeme) {
+    let token = match keyword(lexeme) {
         Some(x) => x,
-        None => TokenType::Identifier,
+        None => Token::Identifier(lexeme.to_vec()),
     };
 
-    Some(Token {
-        token_type,
-        lexeme: lexeme.to_vec(),
-    })
+    Some(token)
+}
+
+
+#[cfg(test)]
+mod test_scanner {
+
+    use crate::input::InputStream;
+    use crate::lang::tokens::{Token, MathOperatorSymbols};
+    use super::*;
+
+
+    #[test]
+    fn test_get_tokens() {
+        let input = b"let in where over struct id create abc +-*/.!^?=:,(){}[]\n".to_vec();
+        let input_stream = InputStream::new(&input);
+        let tokens: Vec<Token> = get_tokens(input_stream).collect();
+
+        assert_eq!(tokens, vec![
+            Token::Let,
+            Token::In,
+            Token::Where,
+            Token::Over,
+            Token::Struct,
+            Token::Id,
+            Token::Create,
+            Token::Identifier(b"abc".to_vec()),
+            Token::Symbol(MathOperatorSymbols::Plus),
+            Token::Symbol(MathOperatorSymbols::Minus),
+            Token::Symbol(MathOperatorSymbols::Star),
+            Token::Symbol(MathOperatorSymbols::FSlash),
+            Token::Symbol(MathOperatorSymbols::Dot),
+            Token::Symbol(MathOperatorSymbols::Bang),
+            Token::Symbol(MathOperatorSymbols::Caret),
+            Token::Question,
+            Token::Equality,
+            Token::Colon,
+            Token::Comma,
+            Token::LeftParen,
+            Token::RightParen,
+            Token::LeftBrace,
+            Token::RightBrace,
+            Token::LeftBox,
+            Token::RightBox,
+            Token::Newline,
+        ]);
+    }
 }

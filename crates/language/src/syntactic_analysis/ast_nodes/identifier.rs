@@ -1,20 +1,25 @@
-use super::Node;
-use crate::lexical_analysis::tokens::Token;
-use crate::lexical_analysis::tokens::TokenType;
+use std::iter::{Iterator, Peekable};
+use crate::{lang::tokens::Token, syntactic_analysis::ast::NodeParseError};
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct Identifier {
-    lexeme: Vec<u8>,
+    pub lexeme: Vec<u8>,
 }
 
-impl Node for Identifier {
-    fn to_str(&self) -> String {
-        format!("IDENTIFIER: {}", str::from_utf8(&self.lexeme).unwrap())
+impl Identifier {
+    pub fn new<'a, T: Iterator<Item=Token>>(tokens: &'a mut Peekable<T>) -> Result<Box<Self>, NodeParseError> {
+        match tokens.next() {
+            Some(Token::Identifier(lexeme)) => {
+                Ok(Box::new(Self { lexeme }))
+            },
+            Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![Token::Identifier(b"".to_vec())])),
+            None => return Err(NodeParseError::UnexpectedEndOfInput),
+        }
     }
 
-    fn new(tokens: &'a mut dyn crate::core::Stream<Token>) -> Result<Box<Self>> {
-        match tokens.next() {
-            Token {lexeme, token_type: TokenType::Identifier} => Ok(Identifier::new(lexeme)),
-            _ => Err(),
+    pub fn from_lexeme(lexeme: Vec<u8>) -> Self {
+        Self {
+            lexeme,
         }
     }
 }

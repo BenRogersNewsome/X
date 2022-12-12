@@ -1,46 +1,45 @@
+use std::iter::Peekable;
+
+use crate::lang::tokens::{Token, MathOperatorSymbols};
+use crate::syntactic_analysis::ast::NodeParseError;
 use super::MathExpression;
-use crate::core::Stream;
-use crate::lexical_analysis::tokens::Token;
-use crate::lexical_analysis::tokens::TokenType;
-use crate::core::{pipe, NextFn, ParserFn};
+use super::primary::primary;
 
-// Binary operators in order of precedence
-const BINARY_OPERATORS: [TokenType; 3] = [
-    TokenType::Star,
-    TokenType::Slash,
-    TokenType::Plus,
-];
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct InfixBinary {
-    left_operand: MathExpression,
-    operator: Token,
-    right_operand: MathExpression,
+    pub left_operand: Box<MathExpression>,
+    pub operator: MathOperatorSymbols,
+    pub right_operand: Box<MathExpression>,
 }
 
-pub fn binary_operator(){
-    pipe(
-        BINARY_OPERATORS.map(|token_type| generate_match_infix_binary_operator(token_type))
-    );
-}
 
-fn generate_match_infix_binary_operator(token_type: TokenType) -> ParserFn<&mut dyn Stream<Token>, MathExpression> {
-    |tokens: &mut dyn Stream<Token>, next: NextFn| -> MathExpression {
-        let left_operand = next(tokens);
+macro_rules! matcher_function {
+    ($name:ident, $operator:expr, $next:ident) => {
+        pub fn $name<'a, T: Iterator<Item = Token>>(tokens: &'a mut Peekable<T>) -> Result<Box<MathExpression>, NodeParseError> {
+            let left_operand = $next(tokens)?;
+        
+            if tokens.peek() == Some(&Token::Symbol($operator)) {
+                tokens.next();
 
-        let operator = match tokens.peek().token_type {
-            x if matches!(x, token_type) => {tokens.next(); x},
-            _ => return left_operand
-        };
-
-        let right_operand = next(tokens);
-
-        InfixBinary {
-            left_operand,
-            right_operand,
-            operator,
+                let right_operand = $next(tokens)?;
+                Ok(Box::new(
+                    MathExpression::InfixBinary(InfixBinary {
+                        left_operand,
+                        operator: $operator,
+                        right_operand,
+                    }
+                )))
+            }else{
+                Ok(left_operand)
+            }
         }
-    }
+    };
 }
 
 
-
+matcher_function!(power, MathOperatorSymbols::Caret, primary);
+matcher_function!(divide, MathOperatorSymbols::FSlash, power);
+matcher_function!(times, MathOperatorSymbols::Star, divide);
+matcher_function!(plus, MathOperatorSymbols::Plus, times);
+matcher_function!(minus, MathOperatorSymbols::Minus, plus);

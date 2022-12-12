@@ -4,15 +4,14 @@ use crate::syntactic_analysis::NonTerminalNode;
 use crate::lang::tokens::Token;
 
 use super::Node;
-use super::Identifier;
-use super::equation::Equation;
+use super::MathExpression;
 
-pub struct Definition {
-    free_var: Identifier,
-    constraint: Equation,
+pub struct Equation {
+    left: MathExpression,
+    right: MathExpression,
 }
 
-impl Node for Definition {
+impl Node for Equation {
 
     fn new<'a>(tokens: &'a mut dyn Iterator<Item=Token>) -> Result<Box<Self>> {
         
@@ -23,7 +22,7 @@ impl Node for Definition {
     }
 }
 
-impl NonTerminalNode<'_> for Definition {
+impl NonTerminalNode<'_> for Equation {
 
     fn as_vec(&self) -> Vec<& dyn Node> {
         todo!()
