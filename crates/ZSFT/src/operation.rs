@@ -26,8 +26,12 @@ impl<'a> Deref for RawBinaryOperation {
 }
 
 impl BinaryOperation {
-    pub fn new(definition: BinaryOperationDefinition) -> Self {
+    pub(crate) fn new(definition: BinaryOperationDefinition) -> Self {
         new_binary_operation!(definition)
+    }
+
+    pub fn from_signature(a: &Set, b: &Set, c: &Set) -> Self {
+        Self::new(BinaryOperationDefinition(a.clone(), b.clone(), c.clone()))
     }
 }
 
@@ -46,6 +50,10 @@ pub struct UnaryOperation(UnaryOperationDefinition);
 impl<'a> UnaryOperation {
     pub fn new(definition: UnaryOperationDefinition) -> Self {
         Self(definition)
+    }
+
+    pub fn from_signature(a: &Set, b: &Set) -> Self {
+        Self::new(UnaryOperationDefinition(a.clone(), b.clone()))
     }
 }
 
