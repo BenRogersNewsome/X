@@ -1,13 +1,17 @@
-
+use rc_wrap::rc_wrap;
 use std::ops::Deref;
 
 use super::{set::Set, operation::{BinaryOperation, UnaryOperation}};
 
 
-#[derive(Clone, Debug)]
-pub struct SetElement<'a>(SetElementDefinition<'a>);
+#[rc_wrap(
+    #[derive(Debug, PartialEq, Eq)]
+    pub SetElement
+)]
+#[derive(Debug)]
+pub struct RawSetElement(SetElementDefinition);
 
-impl PartialEq for SetElement<'_>{
+impl PartialEq for RawSetElement {
     
     fn eq(&self, other: &Self) -> bool {
         match (&self.0, &other.0) {
@@ -21,13 +25,27 @@ impl PartialEq for SetElement<'_>{
     }
 }
 
-impl Eq for SetElement<'_> { }
+impl Eq for RawSetElement { }
 
-impl<'a> Deref for SetElement<'a> {
-    type Target = SetElementDefinition<'a>;
+impl Deref for RawSetElement {
+    type Target = SetElementDefinition;
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl RawSetElement {
+
+    pub(self) fn new(set_element_definition: SetElementDefinition) -> Self {
+        Self(set_element_definition)
+    }
+
+    fn _literally_equal(&self, other: &RawSetElement) -> bool {
+        let addr_self: *const Self = self;
+        let addr_other: *const Self = other;
+
+        addr_self == addr_other
     }
 }
 
@@ -36,49 +54,42 @@ pub enum OperationApplicationError {
     InvalidArguments,
 }
 
-impl<'a> SetElement<'a> {
+impl<'a> SetElement {
     pub fn new() -> Self {
-        Self(SetElementDefinition::Anonymous)
+        new_set_element![SetElementDefinition::Anonymous]
     }
 
-    pub fn element_of<'b: 'a>(set: &'b Set) -> Self {
-        Self(SetElementDefinition::MemberOf(set))
+    pub fn element_of(set: &Set) -> Self {
+        new_set_element![SetElementDefinition::MemberOf(set.clone())]
     }
 
-    pub fn from_binary_operation<'c: 'a, 'b: 'a>(op: &'c BinaryOperation<'a>, a: &'b SetElement<'b>, b: &'b SetElement<'b>) -> Result<Self, OperationApplicationError> {
+    pub fn from_binary_operation(op: &BinaryOperation, a: &SetElement, b: &SetElement) -> Result<Self, OperationApplicationError> {
 
         if !op.0.contains(&a) || !op.1.contains(&b) {
             return Err(OperationApplicationError::InvalidArguments);
         };
 
-        Ok(Self(SetElementDefinition::BinaryOperation(op, a, b)))
+        Ok(new_set_element![SetElementDefinition::BinaryOperation(op.clone(), a.clone(), b.clone())])
     }
 
-    pub(super) fn in_set(&self, set: &Set<'a>) -> bool {
-        match self.0 {
+    pub(super) fn in_set(self: &SetElement, set: &Set) -> bool {
+        match &self.0 {
             SetElementDefinition::Anonymous => set.contains(self),
             SetElementDefinition::MemberOf(s) => set == s,
             SetElementDefinition::BinaryOperation(o, _, _) => 
-                set.contains(&Self::element_of(o.2)),
+                set.contains(&Self::element_of(&o.2)),
             SetElementDefinition::UnaryOperation(o, _) => 
-                set.contains(&Self::element_of(o.1)),
+                set.contains(&Self::element_of(&o.1)),
         }
-    }
-
-    fn _literally_equal(&self, other: &SetElement) -> bool {
-        let addr_self: *const SetElement = self;
-        let addr_other: *const SetElement = other;
-
-        addr_self == addr_other
     }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub enum SetElementDefinition<'a> {
+pub enum SetElementDefinition {
     Anonymous,
-    MemberOf(&'a Set<'a>),
-    BinaryOperation(&'a BinaryOperation<'a>, &'a SetElement<'a>, &'a SetElement<'a>),
-    UnaryOperation(&'a UnaryOperation<'a>, &'a SetElement<'a>),
+    MemberOf(Set),
+    BinaryOperation(BinaryOperation, SetElement, SetElement),
+    UnaryOperation(UnaryOperation, SetElement),
 }
 
 #[cfg(test)]

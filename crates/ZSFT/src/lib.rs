@@ -1,4 +1,4 @@
-
+extern crate rc_wrap;
 mod operation;
 mod set_element;
 mod set;

@@ -1,19 +1,56 @@
+use rc_wrap::rc_wrap;
 use std::ops::Deref;
 
 use super::set::Set;
 
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct BinaryOperation<'a>(BinaryOperationDefinition<'a>);
+#[rc_wrap(
+    #[derive(Debug, PartialEq, Eq)]
+    pub BinaryOperation
+)]
+#[derive(Debug, PartialEq, Eq)]
+pub struct RawBinaryOperation(BinaryOperationDefinition);
 
-impl<'a> BinaryOperation<'a> {
-    pub fn new(definition: BinaryOperationDefinition<'a>) -> Self {
+impl RawBinaryOperation {
+    pub fn new(definition: BinaryOperationDefinition) -> Self {
         Self(definition)
     }
 }
 
-impl<'a> Deref for BinaryOperation<'a> {
-    type Target = BinaryOperationDefinition<'a>;
+impl<'a> Deref for RawBinaryOperation {
+    type Target = BinaryOperationDefinition;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl BinaryOperation {
+    pub fn new(definition: BinaryOperationDefinition) -> Self {
+        new_binary_operation!(definition)
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct BinaryOperationDefinition(pub Set, pub Set, pub Set);  // (A, B, C) ==> A x B -> C
+
+impl BinaryOperationDefinition {
+    pub fn new(x: &Set, y: &Set, z: &Set) -> Self {
+        Self(x.clone(), y.clone(), z.clone())
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct UnaryOperation(UnaryOperationDefinition);
+
+impl<'a> UnaryOperation {
+    pub fn new(definition: UnaryOperationDefinition) -> Self {
+        Self(definition)
+    }
+}
+
+impl<'a> Deref for UnaryOperation {
+    type Target = UnaryOperationDefinition;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -21,36 +58,10 @@ impl<'a> Deref for BinaryOperation<'a> {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub struct BinaryOperationDefinition<'a>(pub &'a Set<'a>, pub &'a Set<'a>, pub &'a Set<'a>);  // (A, B, C) ==> A x B -> C
+pub struct UnaryOperationDefinition(pub Set, pub Set);  // (A, B) ==> A -> B
 
-impl<'a> BinaryOperationDefinition<'a> {
-    pub fn new<'b: 'a>(x: &'b Set, y: &'b Set, z: &'b Set) -> Self {
-        Self(x, y, z)
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct UnaryOperation<'a>(UnaryOperationDefinition<'a>);
-
-impl<'a> UnaryOperation<'a> {
-    pub fn new(definition: UnaryOperationDefinition<'a>) -> Self {
-        Self(definition)
-    }
-}
-
-impl<'a> Deref for UnaryOperation<'a> {
-    type Target = UnaryOperationDefinition<'a>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct UnaryOperationDefinition<'a>(pub &'a Set<'a>, pub &'a Set<'a>);  // (A, B) ==> A -> B
-
-impl<'a> UnaryOperationDefinition<'a> {
-    pub fn new<'b: 'a>(x: &'b Set, y: &'b Set) -> Self {
-        Self(x, y)
+impl<'a> UnaryOperationDefinition {
+    pub fn new(x: &Set, y: &Set) -> Self {
+        Self(x.clone(), y.clone())
     }
 }

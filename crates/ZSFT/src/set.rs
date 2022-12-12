@@ -1,9 +1,14 @@
+use rc_wrap::rc_wrap;
 use super::set_element::{SetElement, SetElementDefinition};
 
-#[derive(Clone, Debug)]
-pub struct Set<'a>(SetDefinition<'a>);
+#[rc_wrap(
+    #[derive(Debug, PartialEq, Eq)]
+    pub Set
+)]
+#[derive(Debug)]
+pub struct RawSet(SetDefinition);
 
-impl PartialEq for Set<'_>{
+impl PartialEq for RawSet {
     
     fn eq(&self, other: &Self) -> bool {
         match (&self.0, &other.0) {
@@ -17,37 +22,56 @@ impl PartialEq for Set<'_>{
     }
 }
 
-impl Eq for Set<'_> { }
+impl Eq for RawSet { }
 
-impl<'a> Set<'a> {
+impl RawSet {
+    pub(self) fn new(set_definition: SetDefinition) -> Self {
+        Self(set_definition)
+    }
+
+    fn _literally_equal(&self, other: &Self) -> bool {
+        let addr_self: *const Self = self;
+        let addr_other: *const Self = other;
+
+        addr_self == addr_other
+    }
+}
+
+impl Set {
+
     pub fn new() -> Self {
-        Self(SetDefinition::Anonymous)
+        new_set![SetDefinition::Anonymous]
     }
 
     /// A utility function for creating the union of 2 sets.
-    pub fn union<'b: 'a>(set_1: &'b Set, set_2: &'b Set) -> Self {
-        Self(SetDefinition::Union(set_1, set_2))
+    pub fn union(set_1: &Set, set_2: &Set) -> Self {
+        new_set![SetDefinition::Union(set_1.clone(), set_2.clone())]
     }
 
     /// A utility function for creating the intersection of 2 sets.
-    pub fn intersection<'b: 'a>(set_1: &'b Set, set_2: &'b Set) -> Self {
-        Self(SetDefinition::Intersection(set_1, set_2))
+    pub fn intersection(set_1: &Set, set_2: &Set) -> Self {
+        new_set![SetDefinition::Intersection(set_1.clone(), set_2.clone())]
     }
 
     /// A utility function for creating the difference of 2 sets.
-    pub fn difference<'b: 'a>(set_1: &'b Set, set_2: &'b Set) -> Self {
-        Self(SetDefinition::Difference(set_1, set_2))
+    pub fn difference(set_1: &Set, set_2: &Set) -> Self {
+        new_set![SetDefinition::Difference(set_1.clone(), set_2.clone())]
     }
 
     /// A utility function for creating a set from a list of set elements.
-    pub fn from_elements<'b: 'a>(set_elements: Vec<&'b SetElement<'b>>) -> Self {
-        Self(SetDefinition::FromElements(set_elements))
+    pub fn from_elements(set_elements: Vec<&SetElement>) -> Self {
+        new_set![SetDefinition::FromElements(
+            set_elements
+                .into_iter()
+                .map(|x| x.clone())
+                .collect()
+        )]
     }
 
-    pub fn contains(&self, set_element: &SetElement) -> bool {
+    pub fn contains(self: &Self, set_element: &SetElement) -> bool {
         match &self.0 {
             SetDefinition::Anonymous => {
-                match **set_element {
+                match ***set_element {
                     // Needed to prevent infinite recursion when asking if an anonymous element is a member of an anonymous set.
                     SetElementDefinition::Anonymous => false,
                     _ => set_element.in_set(self),
@@ -62,25 +86,18 @@ impl<'a> Set<'a> {
             SetDefinition::Difference(set_1, set_2) => {
                 set_1.contains(set_element) && !set_2.contains(set_element)
             },
-            SetDefinition::FromElements(elements) => elements.contains(&set_element), 
+            SetDefinition::FromElements(elements) => elements.contains(& set_element), 
         }
-    }
-
-    fn _literally_equal(&self, other: &Set) -> bool {
-        let addr_self: *const Set = self;
-        let addr_other: *const Set = other;
-
-        addr_self == addr_other
     }
 }
 
 #[derive(PartialEq, Clone, Eq, Debug)]
-pub enum SetDefinition<'a> {
+pub enum SetDefinition {
     Anonymous,
-    Union(&'a Set<'a>, &'a Set<'a>),
-    Intersection(&'a Set<'a>, &'a Set<'a>),
-    Difference(&'a Set<'a>, &'a Set<'a>),
-    FromElements(Vec<&'a SetElement<'a>>),
+    Union(Set, Set),
+    Intersection(Set, Set),
+    Difference(Set, Set),
+    FromElements(Vec<SetElement>),
 }
 
 #[cfg(test)]
