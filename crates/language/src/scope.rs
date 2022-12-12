@@ -5,9 +5,9 @@ use lazymath::abstract_algebra::{MathStructure, FutureValue, FutureStructBinding
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum ScopedItem {
-    Set(Rc<Set>),
-    SetElement(Rc<SetElement>),
-    BinaryOperation(Rc<BinaryOperation>),
+    Set(Set),
+    SetElement(SetElement),
+    BinaryOperation(BinaryOperation),
     Expression(Rc<Expression>),
     Structure(Rc<MathStructure>),
 

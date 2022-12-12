@@ -4,7 +4,6 @@ use std::iter::Peekable;
 use lazymath::abstract_algebra::FutureValue;
 use lazymath::abstract_algebra::FutureStructBinding;
 use zsft::BinaryOperation;
-use zsft::BinaryOperationDefinition;
 use zsft::Set;
 use zsft::SetElement;
 
@@ -102,7 +101,7 @@ impl StructSignature {
                     let future_set_clone = future_set.clone();
                     let future_struct_binding = FutureStructBinding::Element(FutureValue::new(
                         Box::new(move || {
-                            SetElement::element_of(future_set_clone.get().unwrap())
+                            SetElement::element_of(&future_set_clone.get().unwrap())
                         }))
                     );
                     
@@ -115,11 +114,11 @@ impl StructSignature {
                     let future_struct_binding = FutureStructBinding::Operation(
                         FutureValue::new(Box::new(move || {
                             if o.right != None {
-                                BinaryOperation::new(BinaryOperationDefinition::new(
-                                    future_set_clone.clone().get().unwrap(),
-                                    future_set_clone.clone().get().unwrap(),
-                                    future_set_clone.get().unwrap(),
-                                ))
+                                BinaryOperation::from_signature(
+                                    &future_set_clone.clone().get().unwrap(),
+                                    &future_set_clone.clone().get().unwrap(),
+                                    &future_set_clone.get().unwrap(),
+                                )
                             }else {
                                 todo!("Unary operations")
                             }

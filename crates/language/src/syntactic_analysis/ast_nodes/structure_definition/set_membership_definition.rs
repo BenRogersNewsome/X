@@ -60,7 +60,7 @@ impl SetMembershipDefinition {
             };
             let cloned_parent_set = parent_set.clone();
             let future_set_element: FutureValue<SetElement> = FutureValue::new(Box::new(move || {
-                SetElement::element_of(cloned_parent_set.clone().get().unwrap())
+                SetElement::element_of(&cloned_parent_set.get().unwrap())
             }));
 
             scope.add(member_id.lexeme.to_vec(), ScopedItem::FutureSetElement(future_set_element.clone())).unwrap();

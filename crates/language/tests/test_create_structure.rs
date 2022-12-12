@@ -1,6 +1,6 @@
 extern crate language;
 
-use language::{run, ScopedItem, Scope};
+use language::{run, ScopedItem};
 
 
 macro_rules! expect_scoped_item_to_be {
@@ -45,7 +45,7 @@ fn test_create_structure() {
     
     match scope.get(b"x").unwrap() {
         ScopedItem::SetElement(s) => {
-            assert!(set_f.clone().contains(s.clone()));
+            assert!(set_f.contains(&s));
         },
         _ => panic!("Expected x to be a SetElement")
     }

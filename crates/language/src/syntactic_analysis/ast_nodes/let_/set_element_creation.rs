@@ -79,7 +79,7 @@ impl ElementCreationInSet {
         for symbol in symbols {
             match scope.add(
                 symbol.lexeme.to_vec(),
-                ScopedItem::SetElement(SetElement::element_of(containing_set.clone()))
+                ScopedItem::SetElement(SetElement::element_of(&containing_set))
             ) {
                 Ok(()) => {},
                 Err(x) => return Err(NodeVisitationError::ItemAlreadyExists(x.to_owned())),

@@ -1,8 +1,8 @@
 use std::{rc::Rc, fmt::Debug, cell::RefCell};
 
 struct _RawFutureValue<T>{
-    pub(self) last_value: Option<Rc<T>>,
-    pub(self) constructor: Box<dyn Fn() -> Rc<T>>,
+    pub(self) last_value: Option<T>,
+    pub(self) constructor: Box<dyn Fn() -> T>,
 }
 
 impl<T: Debug> Debug for _RawFutureValue<T> {
@@ -29,9 +29,9 @@ pub struct FutureValue<T>{
     _raw: Rc<RefCell<_RawFutureValue<T>>>,
 }
 
-impl<T> FutureValue<T> {
+impl<T: Clone> FutureValue<T> {
 
-    pub fn new(constructor: Box<dyn Fn() -> Rc<T>>) -> Self {
+    pub fn new(constructor: Box<dyn Fn() -> T>) -> Self {
         Self {
             _raw: Rc::new(RefCell::new(_RawFutureValue {
                 last_value: None,
@@ -40,13 +40,13 @@ impl<T> FutureValue<T> {
         }
     }
 
-    pub fn reify(&self) -> Rc<T> {
+    pub fn reify(&self) -> T {
         let new_value = ((*self._raw).borrow().constructor)();
         (*self._raw).borrow_mut().last_value = Some(new_value.clone());
         new_value
     }
 
-    pub fn get(&self) -> Option<Rc<T>> {
+    pub fn get<'a>(&'a self) -> Option<T> {
         match &(*self._raw).borrow().last_value {
             Some(x) => Some(x.clone()),
             None => None,

@@ -3,14 +3,14 @@ use future::FutureValue;
 
 use std::{ops::Deref, rc::Rc, iter::zip};
 
-use zsft::{Set, BinaryOperation, BinaryOperationDefinition, SetElement};
+use zsft::{Set, BinaryOperation, SetElement};
 use crate::core::{Identity, IdentityElement, IdentityTerm, IdentityExpression};
 
 
 pub enum StructBinding {
-    Element(Rc<SetElement>),
-    Operation(Rc<BinaryOperation>),
-    Set(Rc<Set>),
+    Element(SetElement),
+    Operation(BinaryOperation),
+    Set(Set),
 }
 
 
@@ -20,7 +20,7 @@ pub enum StructBinding {
 /// A MathStructureInstance (MSI) is a implemented as a set, together with a set of operations and identities which define the
 /// action of those operations on the set.
 pub struct MathStructureInstance {
-    pub underlying_set: Rc<Set>,
+    pub underlying_set: Set,
     pub over_structures: Vec<Rc<MathStructureInstance>>,
 
     pub bindings: Vec<StructBinding>,
@@ -60,13 +60,11 @@ impl AbstractBinaryOperationDefinition {
         }
     }
 
-    pub fn to_binary_operation(&self, sets: &Vec<Rc<Set>>) -> Rc<BinaryOperation> {
-        BinaryOperation::new(
-            BinaryOperationDefinition(
-                sets[self.left].clone(),
-                sets[self.right].clone(),
-                sets[self.output].clone(),
-            )
+    pub fn to_binary_operation(&self, sets: &Vec<Rc<Set>>) -> BinaryOperation {
+        BinaryOperation::from_signature(
+            &sets[self.left],
+            &sets[self.right],
+            &sets[self.output],
         )
     }
 }
@@ -85,11 +83,11 @@ impl IdentityDefinitionElement {
         match self {
             IdentityDefinitionElement::ForAll(i) =>
                 IdentityElement::ForAll(
-                    i.get().unwrap()
+                    i.get().unwrap().clone()
                 ),
             IdentityDefinitionElement::Bound(i) =>
                 IdentityElement::ForOne(
-                    i.get().unwrap()
+                    i.get().unwrap().clone()
                 ),
         }
     }
@@ -123,14 +121,14 @@ impl IdentityExpressionDefinition {
                 IdentityExpressionDefinitionTerm::BinaryOperation(i) => {
                     expression.push(
                         IdentityTerm::BinaryOperation(
-                            i.get().unwrap()
+                            i.get().unwrap().clone()
                         )
                     );
                 },
                 IdentityExpressionDefinitionTerm::Element(i) => {
                     expression.push(
                         IdentityTerm::Element(
-                            i.to_identity_element()
+                            i.to_identity_element().clone()
                         )
                     );
                 },
@@ -235,7 +233,7 @@ impl MathStructure {
                 })
                 .collect();
         
-        let _: Vec<Rc<SetElement>> =
+        let _: Vec<SetElement> =
             self.future_internals
                 .iter()
                 .map(|future_binding| {

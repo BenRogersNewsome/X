@@ -1,17 +1,16 @@
-use std::rc::Rc;
 
 use zsft::{SetElement, BinaryOperation};
 
 
 #[derive(Clone)]
 pub enum IdentityElement {
-    ForAll(Rc<SetElement>),
-    ForOne(Rc<SetElement>),
+    ForAll(SetElement),
+    ForOne(SetElement),
 }
 
 pub enum IdentityTerm{
     Element(IdentityElement),
-    BinaryOperation(Rc<BinaryOperation>),
+    BinaryOperation(BinaryOperation),
 }
 
 pub type IdentityExpression = Vec<IdentityTerm>;

@@ -1,11 +1,9 @@
-use std::rc::Rc;
-
 use zsft::{BinaryOperation, SetElement};
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum ExpressionTerm {
-    Element(Rc<SetElement>),
-    BinaryOperation(Rc<BinaryOperation>),
+    Element(SetElement),
+    BinaryOperation(BinaryOperation),
 }
 
 /// A mathematical expression, e.g. `a+2*b`, expressed as a tree in it's pre-traversal representation.

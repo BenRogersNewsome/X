@@ -1,5 +1,4 @@
 use std::iter::Peekable;
-use std::rc::Rc;
 
 use lazymath::abstract_algebra::{IdentityDefinitionElement, FutureValue, IdentityExpressionDefinitionTerm, IdentityExpressionDefinition};
 use lazymath::core::ExpressionTerm;
@@ -51,7 +50,7 @@ impl MathExpression {
     }
 
     fn _identifier_to_expression<'a>(scope: &'a mut Scope, id: Identifier) -> Result<lazymath::core::Expression, NodeVisitationError>  {
-        let set_element: Rc<SetElement> = match scope.get(&id.lexeme) {
+        let set_element: SetElement = match scope.get(&id.lexeme) {
             Some(rc) => match rc {
                 ScopedItem::SetElement(s) => s.clone(),
                 o => return Err(NodeVisitationError::UnexpectedRegisteredItem(o.to_owned())),
@@ -63,7 +62,7 @@ impl MathExpression {
     }
 
     fn _infix_binary_to_expression<'a>(scope: &'a mut Scope, ib: InfixBinary) -> Result<lazymath::core::Expression, NodeVisitationError>  {
-        let operation: Rc<BinaryOperation> = match scope.get(&ib.operator.to_bytes()) {
+        let operation: BinaryOperation = match scope.get(&ib.operator.to_bytes()) {
             Some(rc) => match rc {
                 ScopedItem::BinaryOperation(b) => b.clone(),
                 o => return Err(NodeVisitationError::UnexpectedRegisteredItem(o.to_owned())),
