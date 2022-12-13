@@ -26,10 +26,6 @@ impl<'a> Deref for RawBinaryOperation {
 }
 
 impl BinaryOperation {
-    pub(crate) fn new(definition: BinaryOperationDefinition) -> Self {
-        new_binary_operation!(definition)
-    }
-
     pub fn from_signature(a: &Set, b: &Set, c: &Set) -> Self {
         Self::new(BinaryOperationDefinition(a.clone(), b.clone(), c.clone()))
     }

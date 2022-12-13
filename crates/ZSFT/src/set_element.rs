@@ -36,11 +36,6 @@ impl Deref for RawSetElement {
 }
 
 impl RawSetElement {
-
-    pub(self) fn new(set_element_definition: SetElementDefinition) -> Self {
-        Self(set_element_definition)
-    }
-
     fn _literally_equal(&self, other: &RawSetElement) -> bool {
         let addr_self: *const Self = self;
         let addr_other: *const Self = other;
@@ -55,12 +50,13 @@ pub enum OperationApplicationError {
 }
 
 impl<'a> SetElement {
-    pub fn new() -> Self {
-        new_set_element![SetElementDefinition::Anonymous]
+    
+    pub fn anonymous() -> Self {
+        Self::new(SetElementDefinition::Anonymous)
     }
 
     pub fn element_of(set: &Set) -> Self {
-        new_set_element![SetElementDefinition::MemberOf(set.clone())]
+        Self::new(SetElementDefinition::MemberOf(set.clone()))
     }
 
     pub fn from_binary_operation(op: &BinaryOperation, a: &SetElement, b: &SetElement) -> Result<Self, OperationApplicationError> {
@@ -69,7 +65,7 @@ impl<'a> SetElement {
             return Err(OperationApplicationError::InvalidArguments);
         };
 
-        Ok(new_set_element![SetElementDefinition::BinaryOperation(op.clone(), a.clone(), b.clone())])
+        Ok(Self::new(SetElementDefinition::BinaryOperation(op.clone(), a.clone(), b.clone())))
     }
 
     pub(super) fn in_set(self: &SetElement, set: &Set) -> bool {
@@ -100,10 +96,10 @@ mod test_set_element_equality {
 
     #[test]
     fn test_set_element_from_operation_equality() {
-        let set_a = Set::new();
-        let set_b = Set::new();
+        let set_a = Set::anonymous();
+        let set_b = Set::anonymous();
 
-        let set_c = Set::new();
+        let set_c = Set::anonymous();
 
         let op = BinaryOperation::new(
             BinaryOperationDefinition::new(&set_a, &set_b, &set_c)
@@ -129,9 +125,9 @@ mod test_set_element_membership{
     #[test]
     fn test_set_element_from_operation_membership() {
 
-        let set_a = Set::new();
-        let set_b = Set::new();
-        let set_c = Set::new();
+        let set_a = Set::anonymous();
+        let set_b = Set::anonymous();
+        let set_c = Set::anonymous();
 
         let op = BinaryOperation::new(
             BinaryOperationDefinition::new(&set_a, &set_b, &set_c)

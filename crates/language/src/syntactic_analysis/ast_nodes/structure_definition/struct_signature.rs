@@ -87,7 +87,7 @@ impl StructSignature {
     pub fn get_bindings(self, scope: &mut Scope) -> Result<(Vec<FutureStructBinding>, FutureValue<Set>), NodeVisitationError> {
 
         let future_set: FutureValue<Set> = FutureValue::new(Box::new(|| {
-            Set::new()
+            Set::anonymous()
         }));
 
         scope.add(self.name.lexeme.to_vec(), crate::ScopedItem::FutureSet(future_set.clone())).unwrap();

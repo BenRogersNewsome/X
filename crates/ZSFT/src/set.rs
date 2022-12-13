@@ -25,10 +25,6 @@ impl PartialEq for RawSet {
 impl Eq for RawSet { }
 
 impl RawSet {
-    pub(self) fn new(set_definition: SetDefinition) -> Self {
-        Self(set_definition)
-    }
-
     fn _literally_equal(&self, other: &Self) -> bool {
         let addr_self: *const Self = self;
         let addr_other: *const Self = other;
@@ -39,33 +35,33 @@ impl RawSet {
 
 impl Set {
 
-    pub fn new() -> Self {
-        new_set![SetDefinition::Anonymous]
+    pub fn anonymous() -> Self {
+        Self::new(SetDefinition::Anonymous)
     }
 
     /// A utility function for creating the union of 2 sets.
     pub fn union(set_1: &Set, set_2: &Set) -> Self {
-        new_set![SetDefinition::Union(set_1.clone(), set_2.clone())]
+        Self::new(SetDefinition::Union(set_1.clone(), set_2.clone()))
     }
 
     /// A utility function for creating the intersection of 2 sets.
     pub fn intersection(set_1: &Set, set_2: &Set) -> Self {
-        new_set![SetDefinition::Intersection(set_1.clone(), set_2.clone())]
+        Self::new(SetDefinition::Intersection(set_1.clone(), set_2.clone()))
     }
 
     /// A utility function for creating the difference of 2 sets.
     pub fn difference(set_1: &Set, set_2: &Set) -> Self {
-        new_set![SetDefinition::Difference(set_1.clone(), set_2.clone())]
+        Self::new(SetDefinition::Difference(set_1.clone(), set_2.clone()))
     }
 
     /// A utility function for creating a set from a list of set elements.
     pub fn from_elements(set_elements: Vec<&SetElement>) -> Self {
-        new_set![SetDefinition::FromElements(
+        Self::new(SetDefinition::FromElements(
             set_elements
                 .into_iter()
                 .map(|x| x.clone())
                 .collect()
-        )]
+        ))
     }
 
     pub fn contains(self: &Self, set_element: &SetElement) -> bool {
@@ -106,8 +102,8 @@ mod test_set_equality {
 
     #[test]
     fn test_reflexive_equality_of_sets() {
-        let set_a = Set::new();
-        let set_b = Set::new();
+        let set_a = Set::anonymous();
+        let set_b = Set::anonymous();
         let set_c = Set::union(&set_a, &set_b);
         let set_d = Set::intersection(&set_a, &set_b);
         let set_e = Set::difference(&set_a, &set_b);
@@ -121,16 +117,16 @@ mod test_set_equality {
 
     #[test]
     fn test_non_equality_of_anonymous_sets() {
-        let set_a = Set::new();
-        let set_b = Set::new();
+        let set_a = Set::anonymous();
+        let set_b = Set::anonymous();
 
         assert_ne!(set_a, set_b);
     }
 
     #[test]
     fn test_equality_of_union_sets() {
-        let set_a = Set::new();
-        let set_b = Set::new();
+        let set_a = Set::anonymous();
+        let set_b = Set::anonymous();
         let set_c = Set::union(&set_a, &set_b);
         let set_d = Set::union(&set_a, &set_b);
         let set_e = Set::union(&set_c, &set_b);
@@ -146,8 +142,8 @@ mod test_set_equality {
 
     #[test]
     fn test_equality_of_intersection_sets() {
-        let set_a = Set::new();
-        let set_b = Set::new();
+        let set_a = Set::anonymous();
+        let set_b = Set::anonymous();
         let set_c = Set::intersection(&set_a, &set_b);
         let set_d = Set::intersection(&set_a, &set_b);
         let set_e = Set::intersection(&set_c, &set_b);
@@ -163,8 +159,8 @@ mod test_set_equality {
 
     #[test]
     fn test_equality_of_difference_sets() {
-        let set_a = Set::new();
-        let set_b = Set::new();
+        let set_a = Set::anonymous();
+        let set_b = Set::anonymous();
         let set_c = Set::difference(&set_a, &set_b);
         let set_d = Set::difference(&set_a, &set_b);
         let set_e = Set::difference(&set_c, &set_b);
@@ -180,8 +176,8 @@ mod test_set_equality {
 
     #[test]
     fn test_non_equality_of_different_set_definitions() {
-        let set_a = Set::new();
-        let set_b = Set::new();
+        let set_a = Set::anonymous();
+        let set_b = Set::anonymous();
         let set_c = Set::union(&set_a, &set_b);
         let set_d = Set::intersection(&set_a, &set_b);
         let set_e = Set::difference(&set_a, &set_b);
@@ -201,9 +197,9 @@ mod test_set_membership {
     #[test]
     fn test_direct_membership() {
 
-        let set_a = Set::new();
+        let set_a = Set::anonymous();
         let element_a = SetElement::element_of(&set_a);
-        let set_b = Set::new();
+        let set_b = Set::anonymous();
 
         assert!(set_a.contains(&element_a));
         assert!(!set_b.contains(&element_a));
@@ -212,9 +208,9 @@ mod test_set_membership {
     #[test]
     fn test_union_membership() {
 
-        let set_a = Set::new();
+        let set_a = Set::anonymous();
         let element_a = SetElement::element_of(&set_a);
-        let set_b = Set::new();
+        let set_b = Set::anonymous();
 
         let set_c = Set::union(&set_a, &set_b);
         
@@ -226,9 +222,9 @@ mod test_set_membership {
     #[test]
     fn test_union_membership_recursive() {
 
-        let set_a = Set::new();
+        let set_a = Set::anonymous();
         let element_a = SetElement::element_of(&set_a);
-        let set_b = Set::new();
+        let set_b = Set::anonymous();
         
         let set_c = Set::union(&set_a, &set_b);
         let set_d = Set::union(&set_c, &set_b);
@@ -242,9 +238,9 @@ mod test_set_membership {
     #[test]
     fn test_intersection_membership() {
 
-        let set_a = Set::new();
+        let set_a = Set::anonymous();
         let element_a = SetElement::element_of(&set_a);
-        let set_b = Set::new();
+        let set_b = Set::anonymous();
 
         let set_c = Set::union(&set_a, &set_b); // a is in C
         let set_d = Set::intersection(&set_a, &set_c); // a is in D
@@ -258,9 +254,9 @@ mod test_set_membership {
     #[test]
     fn test_difference_membership() {
 
-        let set_a = Set::new();
+        let set_a = Set::anonymous();
         let element_a = SetElement::element_of(&set_a);
-        let set_b = Set::new();
+        let set_b = Set::anonymous();
 
         let set_c = Set::difference(&set_a, &set_b); // a is in C
         let set_d = Set::difference(&set_a, &set_c); // a not in D
@@ -273,9 +269,9 @@ mod test_set_membership {
 
     #[test]
     fn test_from_elements_membership() {
-        let element_a = SetElement::new();
-        let element_b = SetElement::new();
-        let element_c = SetElement::new();
+        let element_a = SetElement::anonymous();
+        let element_b = SetElement::anonymous();
+        let element_c = SetElement::anonymous();
 
         let set_a = Set::from_elements(vec![
             &element_a,
@@ -295,8 +291,8 @@ mod test_set_membership {
     #[test]
     fn test_not_infinite_recursion_in_anonymous_membership() {
         use super::super::set_element::SetElement;
-        let set_a = Set::new();
-        let element_a = SetElement::new();
+        let set_a = Set::anonymous();
+        let element_a = SetElement::anonymous();
 
         assert!(!set_a.contains(&element_a));
     }
