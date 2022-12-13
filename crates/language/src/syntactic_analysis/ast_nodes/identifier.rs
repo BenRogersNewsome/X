@@ -1,7 +1,7 @@
 use std::iter::{Iterator, Peekable};
 use crate::{lang::tokens::Token, syntactic_analysis::ast::NodeParseError};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Identifier {
     pub lexeme: Vec<u8>,
 }

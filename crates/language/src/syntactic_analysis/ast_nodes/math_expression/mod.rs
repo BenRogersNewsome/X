@@ -20,7 +20,7 @@ use infix_binary::InfixBinary;
 // pub use postfix_unary::{PostfixUnary, match_postfix_unary_operator};
 pub use primary::primary;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum MathExpression {
     Identifier(Identifier),
     InfixBinary(InfixBinary),
@@ -42,14 +42,14 @@ impl MathExpression {
     }
 
     /// Convert the AST node into a lazymath expression, consuming the node in the process.
-    pub fn into_expression<'a>(self, scope: &'a mut Scope) -> Result<lazymath::core::Expression, NodeVisitationError> {
+    pub fn into_expression<'a>(self, scope: &'a Scope) -> Result<lazymath::core::Expression, NodeVisitationError> {
         match self {
             Self::Identifier(id) => Self::_identifier_to_expression(scope, id),
             Self::InfixBinary(ib) => Self::_infix_binary_to_expression(scope, ib),
         }
     }
 
-    fn _identifier_to_expression<'a>(scope: &'a mut Scope, id: Identifier) -> Result<lazymath::core::Expression, NodeVisitationError>  {
+    fn _identifier_to_expression<'a>(scope: &'a Scope, id: Identifier) -> Result<lazymath::core::Expression, NodeVisitationError>  {
         let set_element: SetElement = match scope.get(&id.lexeme) {
             Some(rc) => match rc {
                 ScopedItem::SetElement(s) => s.clone(),
@@ -61,7 +61,7 @@ impl MathExpression {
         return Ok(vec![ExpressionTerm::Element(set_element)])
     }
 
-    fn _infix_binary_to_expression<'a>(scope: &'a mut Scope, ib: InfixBinary) -> Result<lazymath::core::Expression, NodeVisitationError>  {
+    fn _infix_binary_to_expression<'a>(scope: &'a Scope, ib: InfixBinary) -> Result<lazymath::core::Expression, NodeVisitationError>  {
         let operation: BinaryOperation = match scope.get(&ib.operator.to_bytes()) {
             Some(rc) => match rc {
                 ScopedItem::BinaryOperation(b) => b.clone(),

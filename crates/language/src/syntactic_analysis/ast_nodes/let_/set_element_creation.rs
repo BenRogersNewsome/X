@@ -1,4 +1,5 @@
 use std::iter::{Peekable, Iterator};
+use std::rc::Rc;
 use std::vec;
 
 use zsft::SetElement;
@@ -6,6 +7,7 @@ use zsft::SetElement;
 use crate::lang::tokens::Token;
 use crate::syntactic_analysis::ast::{NodeParseError, NodeVisitationError};
 use crate::scope::{Scope, ScopedItem};
+use crate::syntactic_analysis::ast_nodes::MathExpression;
 
 use super::super::{
     Identifier,
@@ -19,7 +21,7 @@ pub struct ElementCreation {
 
 pub enum ElementCreationDefinition {
     InSet(ElementCreationInSet),
-    // AsExpression(ElementCreationAsExpression),
+    AsExpression(ElementCreationAsExpression),
 }
 
 impl ElementCreation {
@@ -35,7 +37,7 @@ impl ElementCreation {
 
         let definition = match tokens.next() {
             Some(Token::In) => ElementCreationDefinition::InSet(*ElementCreationInSet::new(tokens)?),
-            // Some(Token::Equality) => ElementCreationDefinition::AsExpression(*ElementCreationAsExpression::new(tokens)?),
+            Some(Token::Equality) => ElementCreationDefinition::AsExpression(*ElementCreationAsExpression::new(tokens)?),
             Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![Token::In, Token::Equality])),
             None => return Err(NodeParseError::UnexpectedEndOfInput),
         };
@@ -49,7 +51,7 @@ impl ElementCreation {
     pub fn visit<'a, 'b: 'a>(self, scope: &'a mut Scope) -> Result<(), NodeVisitationError> {
         match self.definition {
             ElementCreationDefinition::InSet(s) => s.visit(self.symbols, scope),
-            // ElementCreationDefinition::AsExpression(expr) => expr.visit(self.symbols, scope),
+            ElementCreationDefinition::AsExpression(expr) => expr.visit(self.symbols, scope),
         }
     }
 }
@@ -90,28 +92,31 @@ impl ElementCreationInSet {
     }
 }
 
-// pub struct ElementCreationAsExpression {
-//     expression: MathExpression,
-// }
+pub struct ElementCreationAsExpression {
+    expression: MathExpression,
+}
 
-// impl ElementCreationAsExpression {
-//     pub fn new<'a, T: Iterator<Item = Token>>(tokens: &'a mut Peekable<T>) -> Result<Box<Self>, NodeParseError> {
-//         return Ok(Box::new(Self {
-//             expression: *MathExpression::new(tokens)?,
-//         }))
-//     }
+impl ElementCreationAsExpression {
+    pub fn new<'a, T: Iterator<Item = Token>>(tokens: &'a mut Peekable<T>) -> Result<Box<Self>, NodeParseError> {
+        return Ok(Box::new(Self {
+            expression: *MathExpression::new(tokens)?,
+        }))
+    }
     
-//     pub fn visit<'a, 'b: 'a>(self, symbols: Vec<Identifier>, scope: &'a mut Scope) -> Result<(), ()> {
-//         for symbol in symbols {
-//             match register.add(
-//                 &symbol.lexeme,
-//                 Registerable::Expression(self.expression.)
-//             ) {
-//                 Ok(()) => {},
-//                 Err(()) => return Err(()),
-//             }
-//         };
+    pub fn visit<'a, 'b: 'a>(self, symbols: Vec<Identifier>, scope: &'a mut Scope) -> Result<(), NodeVisitationError> {
+        for symbol in symbols {
 
-//         Ok(())
-//     }
-// }
+            let expression: lazymath::core::Expression = self.expression.clone().into_expression(&scope)?;
+
+            match scope.add(
+                symbol.lexeme,
+                ScopedItem::Expression(Rc::new(expression))
+            ) {
+                Ok(()) => {},
+                Err(x) => return Err(NodeVisitationError::ItemAlreadyExists(x.to_owned())),
+            }
+        };
+
+        Ok(())
+    }
+}

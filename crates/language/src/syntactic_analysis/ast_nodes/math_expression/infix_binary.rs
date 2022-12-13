@@ -6,7 +6,7 @@ use super::MathExpression;
 use super::primary::primary;
 
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct InfixBinary {
     pub left_operand: Box<MathExpression>,
     pub operator: MathOperatorSymbols,
