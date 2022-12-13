@@ -2,6 +2,7 @@ use std::iter::{Iterator, Peekable};
 
 use crate::lang::tokens::Token;
 use crate::syntactic_analysis::ast::NodeParseError;
+use crate::syntactic_analysis::ast_nodes::expect_token;
 
 use super::super::Symbol;
 use super::super::identifier::Identifier;
@@ -18,11 +19,7 @@ impl OperationDefinition {
     pub fn new<'a, T: Iterator<Item = Token>>(tokens: &'a mut Peekable<T>) -> Result<Box<Self>, NodeParseError> {
         let name = *Symbol::new(tokens)?;
 
-        match tokens.next() {
-            Some(Token::Colon) => {},
-            Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![Token::Colon])),
-            None => return Err(NodeParseError::UnexpectedEndOfInput),
-        };
+        expect_token!(tokens, Colon);
 
         let left = *Identifier::new(tokens)?;
 

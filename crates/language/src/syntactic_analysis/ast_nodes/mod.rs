@@ -42,8 +42,18 @@ macro_rules! skip_whitespace {
     };
 }
 
+macro_rules! optional_token {
+    ($tokens:ident, $token:ident) => {
+        match $tokens.peek() {
+            Some(&Token::$token) => { $tokens.next(); },
+            _ => {},
+        };
+    };
+}
+
 pub(super) use expect_token;
 pub(super) use skip_whitespace;
+pub(super) use optional_token;
 
 use crate::{lang::tokens::Token, scope::Scope};
 
