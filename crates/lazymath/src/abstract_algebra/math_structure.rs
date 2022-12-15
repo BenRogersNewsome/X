@@ -223,8 +223,6 @@ impl MathStructure {
 
         self.validate_over_structures(&over_structures)?;
 
-        let underlying_set = self.future_set.reify();
-
         let bindings: Vec<StructBinding> =
             self.future_bindings
                 .iter()
@@ -233,6 +231,11 @@ impl MathStructure {
                 })
                 .collect();
         
+        let underlying_set = match &bindings[0] {
+            StructBinding::Set(s) => s.clone(),
+            _ => panic!(),
+        };
+
         let _: Vec<SetElement> =
             self.future_internals
                 .iter()

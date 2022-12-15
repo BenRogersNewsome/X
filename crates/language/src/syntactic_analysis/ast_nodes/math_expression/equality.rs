@@ -1,7 +1,7 @@
 
 use std::iter::Peekable;
 
-use crate::{lang::tokens::Token, syntactic_analysis::{ast::NodeParseError, ast_nodes::expect_token}};
+use crate::{syntactic_analysis::{ast::NodeParseError, ast_nodes::expect_token}, lexical_analysis::Token};
 
 use super::MathExpression;
 

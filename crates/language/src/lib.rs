@@ -3,8 +3,6 @@ use input::InputStream;
 use lexical_analysis::scanner::get_tokens;
 use syntactic_analysis::Ast;
 
-mod core;
-mod lang;
 mod input;
 mod lexical_analysis;
 mod syntactic_analysis;

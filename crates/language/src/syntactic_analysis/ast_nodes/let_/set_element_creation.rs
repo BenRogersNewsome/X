@@ -4,10 +4,11 @@ use std::vec;
 
 use zsft::SetElement;
 
-use crate::lang::tokens::Token;
+use crate::lexical_analysis::TokenType;
+use crate::lexical_analysis::Token;
 use crate::syntactic_analysis::ast::{NodeParseError, NodeVisitationError};
 use crate::scope::{Scope, ScopedItem};
-use crate::syntactic_analysis::ast_nodes::MathExpression;
+use crate::syntactic_analysis::ast_nodes::{MathExpression, do_while_token};
 
 use super::super::{
     Identifier,
@@ -30,15 +31,14 @@ impl ElementCreation {
 
         symbols.push(*Identifier::new(tokens)?);
 
-        while tokens.peek() == Some(&Token::Comma) {
-            tokens.next();
-            symbols.push(*Identifier::new(tokens)?);
-        };
+        do_while_token!(tokens, Comma, 
+            symbols.push(*Identifier::new(tokens)?)
+        );
 
         let definition = match tokens.next() {
-            Some(Token::In) => ElementCreationDefinition::InSet(*ElementCreationInSet::new(tokens)?),
-            Some(Token::Equality) => ElementCreationDefinition::AsExpression(*ElementCreationAsExpression::new(tokens)?),
-            Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![Token::In, Token::Equality])),
+            Some(Token { type_: TokenType::In, ..}) => ElementCreationDefinition::InSet(*ElementCreationInSet::new(tokens)?),
+            Some(Token { type_: TokenType::Equality, ..}) => ElementCreationDefinition::AsExpression(*ElementCreationAsExpression::new(tokens)?),
+            Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![TokenType::In, TokenType::Equality])),
             None => return Err(NodeParseError::UnexpectedEndOfInput),
         };
 

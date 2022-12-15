@@ -1,7 +1,7 @@
 use std::iter::{Peekable, Iterator};
 use std::vec;
 
-use crate::lang::tokens::Token;
+use crate::lexical_analysis::Token;
 use crate::syntactic_analysis::ast::{NodeParseError, NodeVisitationError};
 use crate::scope::{Scope, ScopedItem};
 use crate::syntactic_analysis::ast_nodes::common::StructSignature;

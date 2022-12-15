@@ -1,6 +1,7 @@
 use std::iter::{Iterator, Peekable};
 
-use crate::lang::tokens::Token;
+use crate::lexical_analysis::TokenType;
+use crate::lexical_analysis::Token;
 use crate::syntactic_analysis::ast::NodeParseError;
 use crate::syntactic_analysis::ast_nodes::expect_token;
 
@@ -23,7 +24,7 @@ impl OperationDefinition {
 
         let left = *Identifier::new(tokens)?;
 
-        let right = if let Some(Token::Symbol(_)) = tokens.peek(){
+        let right = if let Some(&Token { type_: TokenType::Symbol(_), ..}) = tokens.peek(){
             tokens.next();
             Some(*Identifier::new(tokens)?)
         }else{
@@ -31,8 +32,8 @@ impl OperationDefinition {
         };
         
         match tokens.next() {
-            Some(Token::RightArrow) => {},
-            Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![Token::RightArrow])),
+            Some(Token { type_: TokenType::RightArrow, ..}) => {},
+            Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![TokenType::RightArrow])),
             None => return Err(NodeParseError::UnexpectedEndOfInput),
         };
 
@@ -48,7 +49,7 @@ impl OperationDefinition {
     }
 }
 
-#[cfg(test)]
+#[cfg(test_)]
 mod tests {
 
     use crate::lang::tokens::MathOperatorSymbols;
@@ -58,8 +59,8 @@ mod tests {
     fn test_create_operation_definition() {
 
         let tokens = [
-            Token::Symbol(MathOperatorSymbols::Plus), Token::Colon, Token::Identifier(b"F".to_vec()), Token::Symbol(MathOperatorSymbols::Plus), Token::Identifier(b"V".to_vec()), Token::RightArrow,  Token::Identifier(b"V".to_vec()),
-            Token::Newline,
+            TokenType::Symbol(MathOperatorSymbols::Plus), TokenType::Colon, TokenType::Identifier(b"F".to_vec()), TokenType::Symbol(MathOperatorSymbols::Plus), TokenType::Identifier(b"V".to_vec()), TokenType::RightArrow,  TokenType::Identifier(b"V".to_vec()),
+            TokenType::Newline,
         ];
 
         let operation_definition = *OperationDefinition::new(&mut tokens.into_iter().peekable()).unwrap();

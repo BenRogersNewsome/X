@@ -1,6 +1,7 @@
 use std::iter::Peekable;
 
-use crate::lang::tokens::{Token, MathOperatorSymbols};
+use crate::lexical_analysis::MathOperatorSymbols;
+use crate::lexical_analysis::Token;
 use crate::syntactic_analysis::ast::NodeParseError;
 use super::MathExpression;
 use super::primary::primary;
@@ -19,19 +20,24 @@ macro_rules! matcher_function {
         pub fn $name<'a, T: Iterator<Item = Token>>(tokens: &'a mut Peekable<T>) -> Result<Box<MathExpression>, NodeParseError> {
             let left_operand = $next(tokens)?;
         
-            if tokens.peek() == Some(&Token::Symbol($operator)) {
-                tokens.next();
+            if let Some(x) = tokens.peek() {
 
-                let right_operand = $next(tokens)?;
-                Ok(Box::new(
-                    MathExpression::InfixBinary(InfixBinary {
-                        left_operand,
-                        operator: $operator,
-                        right_operand,
-                    }
-                )))
+                if x.type_ == crate::lexical_analysis::TokenType::Symbol($operator) {
+                    tokens.next();
+    
+                    let right_operand = $next(tokens)?;
+                    Ok(Box::new(
+                        MathExpression::InfixBinary(InfixBinary {
+                            left_operand,
+                            operator: $operator,
+                            right_operand,
+                        }
+                    )))
+                }else{
+                    Ok(left_operand)
+                }
             }else{
-                Ok(left_operand)
+                Err(NodeParseError::UnexpectedEndOfInput)
             }
         }
     };

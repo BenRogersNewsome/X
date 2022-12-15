@@ -11,10 +11,11 @@ use std::iter::Iterator;
 use std::iter::Peekable;
 use std::rc::Rc;
 
-use crate::lang::tokens::Token;
+use crate::lexical_analysis::Token;
 use crate::scope::Scope;
 use crate::syntactic_analysis::ast::NodeParseError;
 use crate::syntactic_analysis::ast::NodeVisitationError;
+use crate::syntactic_analysis::ast_nodes::break_on_token;
 use crate::syntactic_analysis::ast_nodes::{expect_token, optional_token};
 
 use super::Identifier;
@@ -62,16 +63,13 @@ impl StructDefinition {
         expect_token!(tokens, Where);
 
         let constraint_variables = *SetMembershipDefinition::new(tokens)?;
-        
+
         expect_token!(tokens, Colon);
         expect_token!(tokens, Newline);
 
         let mut constraints = vec![];
         loop {
-            if let Some(Token::Newline) = tokens.peek() {
-                tokens.next();
-                break;
-            };
+            break_on_token!(tokens, Newline);
             constraints.push(*Equality::new(tokens)?);
             expect_token!(tokens, Newline);
         };
@@ -111,10 +109,10 @@ impl StructDefinition {
 }
 
 
-#[cfg(test)]
+#[cfg(test_)]
 mod tests {
 
-    use crate::lang::tokens::{Token, MathOperatorSymbols};
+    use crate::lexical_analysis::{TokenType, MathOperatorSymbols};
     use super::*;
 
     #[test]
@@ -122,25 +120,25 @@ mod tests {
 
         let tokens = [
             // <struct> Field { 
-            Token::id(b"Field"), Token::LeftBrace, 
+            TokenType::id(b"Field"), TokenType::LeftBrace, 
                 // F;
-                Token::id(b"F"), Token::SemiColon,
+                TokenType::id(b"F"), TokenType::SemiColon,
                 // + : F + F -> F,
-                Token::op(MathOperatorSymbols::Plus), Token::Colon, Token::id(b"F"), Token::op(MathOperatorSymbols::Plus),
-                Token::id(b"F"), Token::RightArrow, Token::id(b"F"), Token::Comma, Token::Newline,
+                TokenType::op(MathOperatorSymbols::Plus), TokenType::Colon, TokenType::id(b"F"), TokenType::op(MathOperatorSymbols::Plus),
+                TokenType::id(b"F"), TokenType::RightArrow, TokenType::id(b"F"), TokenType::Comma, TokenType::Newline,
                 // * : F * F -> F,
-                Token::op(MathOperatorSymbols::Star), Token::Colon, Token::id(b"F"), Token::op(MathOperatorSymbols::Star),
-                Token::id(b"F"), Token::RightArrow, Token::id(b"F"), Token::Comma, Token::Newline,
+                TokenType::op(MathOperatorSymbols::Star), TokenType::Colon, TokenType::id(b"F"), TokenType::op(MathOperatorSymbols::Star),
+                TokenType::id(b"F"), TokenType::RightArrow, TokenType::id(b"F"), TokenType::Comma, TokenType::Newline,
             // }
-            Token::RightBrace, Token::Newline,
+            TokenType::RightBrace, TokenType::Newline,
             // where forall a,b in F:
-            Token::Where, Token::ForAll, Token::id(b"a"), Token::Comma, Token::id(b"b"),
-            Token::In, Token::id(b"F"), Token::Colon, Token::Newline,
+            TokenType::Where, TokenType::ForAll, TokenType::id(b"a"), TokenType::Comma, TokenType::id(b"b"),
+            TokenType::In, TokenType::id(b"F"), TokenType::Colon, TokenType::Newline,
             //     a + b = b + a
-            Token::id(b"a"), Token::op(MathOperatorSymbols::Plus), Token::id(b"b"), Token::Equality,
-            Token::id(b"b"), Token::op(MathOperatorSymbols::Plus), Token::id(b"a"),  Token::Newline,
+            TokenType::id(b"a"), TokenType::op(MathOperatorSymbols::Plus), TokenType::id(b"b"), TokenType::Equality,
+            TokenType::id(b"b"), TokenType::op(MathOperatorSymbols::Plus), TokenType::id(b"a"),  TokenType::Newline,
             
-            Token::Newline,
+            TokenType::Newline,
         ];
 
         let _struct_def = *StructDefinition::new(&mut tokens.into_iter().peekable()).unwrap();

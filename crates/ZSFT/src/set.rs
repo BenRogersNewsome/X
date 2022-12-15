@@ -1,8 +1,9 @@
+use std::fmt::Debug;
+
 use rc_wrap::rc_wrap;
 use super::set_element::{SetElement, SetElementDefinition};
 
 #[rc_wrap(
-    #[derive(Debug, PartialEq, Eq)]
     pub Set
 )]
 #[derive(Debug)]
@@ -86,6 +87,25 @@ impl Set {
         }
     }
 }
+
+impl Debug for Set {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let addr: *const RawSet = &*self._raw;
+        f.write_str(&format!("{:?}", addr))
+    }
+}
+
+impl PartialEq for Set {
+    fn eq(&self, other: &Self) -> bool {
+        self._raw._literally_equal(&other._raw)
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self._raw._literally_equal(&other._raw)
+    }
+}
+
+impl Eq for Set { }
 
 #[derive(PartialEq, Clone, Eq, Debug)]
 pub enum SetDefinition {

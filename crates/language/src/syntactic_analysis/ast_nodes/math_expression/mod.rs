@@ -4,7 +4,8 @@ use lazymath::abstract_algebra::{IdentityDefinitionElement, FutureValue, Identit
 use lazymath::core::ExpressionTerm;
 use zsft::{SetElement, BinaryOperation};
 
-use crate::{lang::tokens::Token, syntactic_analysis::ast::NodeVisitationError};
+use crate::lexical_analysis::Token;
+use crate::syntactic_analysis::ast::NodeVisitationError;
 use crate::syntactic_analysis::ast::NodeParseError;
 use crate::scope::{Scope, ScopedItem};
 
@@ -43,13 +44,20 @@ impl MathExpression {
 
     /// Convert the AST node into a lazymath expression, consuming the node in the process.
     pub fn into_expression<'a>(self, scope: &'a Scope) -> Result<lazymath::core::Expression, NodeVisitationError> {
-        match self {
-            Self::Identifier(id) => Self::_identifier_to_expression(scope, id),
-            Self::InfixBinary(ib) => Self::_infix_binary_to_expression(scope, ib),
-        }
+        Ok(lazymath::core::Expression::new(match self {
+            Self::Identifier(id) => Self::_identifier_to_expression(scope, id)?,
+            Self::InfixBinary(ib) => Self::_infix_binary_to_expression(scope, ib)?,
+        }))
     }
 
-    fn _identifier_to_expression<'a>(scope: &'a Scope, id: Identifier) -> Result<lazymath::core::Expression, NodeVisitationError>  {
+    fn _into_expression<'a>(self, scope: &'a Scope) -> Result<Vec<ExpressionTerm>, NodeVisitationError> {
+        Ok(match self {
+            Self::Identifier(id) => Self::_identifier_to_expression(scope, id)?,
+            Self::InfixBinary(ib) => Self::_infix_binary_to_expression(scope, ib)?,
+        })
+    }
+
+    fn _identifier_to_expression<'a>(scope: &'a Scope, id: Identifier) -> Result<Vec<ExpressionTerm>, NodeVisitationError>  {
         let set_element: SetElement = match scope.get(&id.lexeme) {
             Some(rc) => match rc {
                 ScopedItem::SetElement(s) => s.clone(),
@@ -61,7 +69,7 @@ impl MathExpression {
         return Ok(vec![ExpressionTerm::Element(set_element)])
     }
 
-    fn _infix_binary_to_expression<'a>(scope: &'a Scope, ib: InfixBinary) -> Result<lazymath::core::Expression, NodeVisitationError>  {
+    fn _infix_binary_to_expression<'a>(scope: &'a Scope, ib: InfixBinary) -> Result<Vec<ExpressionTerm>, NodeVisitationError>  {
         let operation: BinaryOperation = match scope.get(&ib.operator.to_bytes()) {
             Some(rc) => match rc {
                 ScopedItem::BinaryOperation(b) => b.clone(),
@@ -70,7 +78,14 @@ impl MathExpression {
             None => return Err(NodeVisitationError::RegisteredItemNotFound),
         };
 
-        return Ok(vec![ExpressionTerm::BinaryOperation(operation)])
+        let left = ib.left_operand._into_expression(scope)?;
+        let right = ib.right_operand._into_expression(scope)?;
+
+        let mut expression = vec![ExpressionTerm::BinaryOperation(operation)];
+        expression.extend(left);
+        expression.extend(right);
+
+        Ok(expression)
     }
 
     pub fn into_future_expression(self, scope: &mut Scope) -> Result<lazymath::abstract_algebra::IdentityExpressionDefinition, NodeVisitationError> {
@@ -119,7 +134,7 @@ impl MathExpression {
     }
 }
 
-#[cfg(test)]
+#[cfg(test_)]
 mod tests {
     use crate::lang::tokens::MathOperatorSymbols;
     use super::*;
@@ -127,8 +142,8 @@ mod tests {
     #[test]
     fn test_binary_operations() {
         let tokens = [
-            Token::id(b"a"), Token::op(MathOperatorSymbols::Plus), Token::id(b"b"), Token::op(MathOperatorSymbols::Star),
-            Token::id(b"c"),
+            TokenType::id(b"a"), TokenType::op(MathOperatorSymbols::Plus), TokenType::id(b"b"), TokenType::op(MathOperatorSymbols::Star),
+            TokenType::id(b"c"),
         ];
 
         let math_expression = *MathExpression::new(&mut tokens.into_iter().peekable()).unwrap();

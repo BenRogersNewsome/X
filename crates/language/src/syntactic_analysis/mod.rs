@@ -1,41 +1,39 @@
 pub mod ast_nodes;
 mod ast;
 
-use crate::{lang::tokens::Token, scope::Scope};
+use crate::{lexical_analysis::TokenType, scope::Scope, lexical_analysis::Token};
 
-use ast_nodes::Let;
-use ast_nodes::StructDefinition;
+use ast_nodes::{Let, StructDefinition, Assertion};
 
 use self::ast::NodeVisitationError;
 
 enum TopLevelNode {
     Let(Let),
-    Struct(StructDefinition)
+    Struct(StructDefinition),
+    Assertion(Assertion),
 }
 
 pub struct Ast(Vec<TopLevelNode>);
 
 impl Ast {
-    pub fn new<'a, T: Iterator<Item = crate::lang::tokens::Token>>(tokens: &'a mut std::iter::Peekable<T>) -> Result<Box<Self>, ast::NodeParseError> {
+    pub fn new<'a, T: Iterator<Item = Token>>(tokens: &'a mut std::iter::Peekable<T>) -> Result<Box<Self>, ast::NodeParseError> {
         let mut nodes = vec![];
         while tokens.peek() != None {
             match tokens.next() {
-                Some(Token::Let) => nodes.push(TopLevelNode::Let(*Let::new(tokens)?)),
-                Some(Token::Struct) => nodes.push(TopLevelNode::Struct(*StructDefinition::new(tokens)?)),
-                Some(Token::Newline) => {},
+                Some(Token { type_: TokenType::Turnstile, ..}) => nodes.push(TopLevelNode::Assertion(*Assertion::new(tokens)?)),
+                Some(Token { type_: TokenType::Let, ..}) => nodes.push(TopLevelNode::Let(*Let::new(tokens)?)),
+                Some(Token { type_: TokenType::Struct, ..}) => nodes.push(TopLevelNode::Struct(*StructDefinition::new(tokens)?)),
+                Some(Token { type_: TokenType::Newline, ..}) => {},
                 _ => panic!(),
             }
         }
         Ok(Box::new(Self(nodes)))
     }
 
-    fn to_str(&self) -> String {
-        todo!()
-    }
-
     pub fn visit<'a>(self, scope: &'a mut Scope) -> Result<(), NodeVisitationError> {
         for node in self.0 {
             match node {
+                TopLevelNode::Assertion(x) => x.visit(scope)?,
                 TopLevelNode::Let(x) => x.visit(scope)?,
                 TopLevelNode::Struct(x) => x.visit(scope)?,
             };

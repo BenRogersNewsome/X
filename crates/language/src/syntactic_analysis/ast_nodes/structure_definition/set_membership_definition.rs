@@ -4,7 +4,8 @@ use std::iter::Peekable;
 use lazymath::abstract_algebra::FutureValue;
 use zsft::SetElement;
 
-use crate::lang::tokens::Token;
+use crate::lexical_analysis::TokenType;
+use crate::lexical_analysis::Token;
 use crate::scope::Scope;
 use crate::scope::ScopedItem;
 use crate::syntactic_analysis::ast::NodeParseError;
@@ -30,7 +31,7 @@ impl SetMembershipDefinition {
         let set = loop {
             members.push(*Identifier::new(tokens)?);
 
-            if let Some(Token::In) = tokens.peek() {
+            if let Some(Token { type_: TokenType::In, ..}) = tokens.peek() {
                 tokens.next();
                 break *Identifier::new(tokens)?
             }else{

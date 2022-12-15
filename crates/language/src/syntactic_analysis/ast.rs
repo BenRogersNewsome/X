@@ -1,10 +1,10 @@
 
-use crate::{lang::tokens::Token, scope::ScopedItem};
+use crate::{lexical_analysis::TokenType, scope::ScopedItem, lexical_analysis::Token};
 
 #[derive(Debug)]
 pub enum NodeParseError {
     UnexpectedEndOfInput,
-    UnexpectedToken(Token, Vec<Token>),
+    UnexpectedToken(Token, Vec<TokenType>),
 }
 
 #[derive(Debug)]
@@ -13,8 +13,6 @@ pub enum NodeVisitationError {
     RegisteredItemNotFound,
     ItemAlreadyExists(ScopedItem),
 
-    DuplicateOperationDefinition,
-    UnknownSymbolInScope(u8),
     ReDeclaredScopedVariable(Vec<u8>),
     CantResolveToken(String),
     TokenOfWrongType(Vec<u8>, ScopedItem),

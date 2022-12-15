@@ -1,6 +1,7 @@
 use std::iter::{Peekable, Iterator};
 
-use crate::lang::tokens::Token;
+use crate::lexical_analysis::TokenType;
+use crate::lexical_analysis::Token;
 use crate::syntactic_analysis::ast::{NodeParseError, NodeVisitationError};
 use crate::scope::Scope;
 
@@ -19,7 +20,7 @@ pub enum Let {
 impl Let {
     pub fn new<'a, T: Iterator<Item = Token>>(tokens: &'a mut Peekable<T>) -> Result<Box<Self>, NodeParseError> {
         Ok(Box::new(match tokens.peek() {
-            Some(Token::LeftParen) => Self::Struct(*StructCreation::new(tokens)?),
+            Some(Token { type_: TokenType::LeftParen, ..}) => Self::Struct(*StructCreation::new(tokens)?),
             Some(_) => Self::Element(*ElementCreation::new(tokens)?),
             None => return Err(NodeParseError::UnexpectedEndOfInput),
         }))

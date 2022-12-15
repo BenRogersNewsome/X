@@ -1,5 +1,5 @@
 use std::iter::{Iterator, Peekable};
-use crate::{lang::tokens::Token, syntactic_analysis::ast::NodeParseError};
+use crate::{lexical_analysis::TokenType, syntactic_analysis::ast::NodeParseError, lexical_analysis::Token};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Identifier {
@@ -9,10 +9,10 @@ pub struct Identifier {
 impl Identifier {
     pub fn new<'a, T: Iterator<Item=Token>>(tokens: &'a mut Peekable<T>) -> Result<Box<Self>, NodeParseError> {
         match tokens.next() {
-            Some(Token::Identifier(lexeme)) => {
+            Some(Token { type_: TokenType::Identifier(lexeme), .. }) => {
                 Ok(Box::new(Self { lexeme }))
             },
-            Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![Token::Identifier(b"".to_vec())])),
+            Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![TokenType::Identifier(b"".to_vec())])),
             None => return Err(NodeParseError::UnexpectedEndOfInput),
         }
     }
@@ -24,3 +24,8 @@ impl Identifier {
     }
 }
 
+impl Into<String> for Identifier {
+    fn into(self) -> String {
+        String::from_utf8(self.lexeme).unwrap()
+    }
+}

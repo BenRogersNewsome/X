@@ -46,6 +46,13 @@ impl InputStream {
         Some(self.source[self.pos])
     }
 
+    pub fn ppeek(&mut self) -> Option<u8> {
+        if self.pos == self.source.len() + 1 {
+            return None;
+        };
+        Some(self.source[self.pos + 1])
+    }
+
     pub fn skip(&mut self) {
         self.pos += 1;
         self.start = self.pos;
@@ -55,5 +62,9 @@ impl InputStream {
         let chars = &self.source[self.start .. self.pos];
         self.start = self.pos;
         return chars;
+    }
+
+    pub fn get_position(&self) -> (usize, usize) {
+        (self.line, self.col)
     }
 }

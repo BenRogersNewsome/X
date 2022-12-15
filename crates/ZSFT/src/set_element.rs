@@ -60,7 +60,6 @@ impl<'a> SetElement {
     }
 
     pub fn from_binary_operation(op: &BinaryOperation, a: &SetElement, b: &SetElement) -> Result<Self, OperationApplicationError> {
-
         if !op.0.contains(&a) || !op.1.contains(&b) {
             return Err(OperationApplicationError::InvalidArguments);
         };

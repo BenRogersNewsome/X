@@ -54,3 +54,35 @@ impl<T: Clone> FutureValue<T> {
     }
 
 }
+
+#[cfg(test)]
+mod tests {
+    use super::FutureValue;
+    use zsft::Set;
+
+
+    #[test]
+    fn test_memory_address_preserved() {
+        let future_val: FutureValue<Set> = FutureValue::new(Box::new(|| {
+            Set::anonymous()
+        }));
+
+        let fv_clone = future_val.clone();
+
+        let inner_future: FutureValue<Set> = FutureValue::new(Box::new(move || {
+            fv_clone.clone().get().unwrap()
+        }));
+
+        let val = future_val.reify();
+
+        assert_eq!(
+            val,
+            inner_future.clone().reify(),
+        );
+
+        assert_eq!(
+            val,
+            inner_future.clone().get().unwrap(),
+        );
+    }
+}

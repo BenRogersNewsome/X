@@ -7,7 +7,8 @@ use zsft::BinaryOperation;
 use zsft::Set;
 use zsft::SetElement;
 
-use crate::lang::tokens::Token;
+use crate::lexical_analysis::TokenType;
+use crate::lexical_analysis::Token;
 use crate::scope::Scope;
 use crate::syntactic_analysis::ast::NodeParseError;
 use crate::syntactic_analysis::ast::NodeVisitationError;
@@ -55,23 +56,23 @@ impl StructSignature {
             skip_whitespace!(tokens);
             bindings.push(
                 match tokens.peek() {
-                    Some(&Token::Symbol(_)) => StructBinding::Operation(*OperationDefinition::new(tokens)?),
-                    Some(&Token::Identifier(_)) => StructBinding::Element(*Identifier::new(tokens)?),
-                    Some(x) => return Err(NodeParseError::UnexpectedToken(x.to_owned(), vec![Token::Comma, Token::RightBrace])),
+                    Some(&Token { type_: TokenType::Symbol(_), ..}) => StructBinding::Operation(*OperationDefinition::new(tokens)?),
+                    Some(&Token { type_: TokenType::Identifier(_), ..}) => StructBinding::Element(*Identifier::new(tokens)?),
+                    Some(x) => return Err(NodeParseError::UnexpectedToken(x.to_owned(), vec![TokenType::Comma, TokenType::RightBrace])),
                     None => return Err(NodeParseError::UnexpectedEndOfInput),
                 }
             );
 
             match tokens.next() {
-                Some(Token::Comma) => {
+                Some(Token { type_: TokenType::Comma, ..}) => {
                     skip_whitespace!(tokens);
-                    if let Some(&Token::RightBrace) = tokens.peek() {
+                    if let Some(&Token { type_: TokenType::RightBrace, ..}) = tokens.peek() {
                         tokens.next();
                         break;
                     };
                 },
-                Some(Token::RightBrace) => break,
-                Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![Token::Comma, Token::RightBrace])),
+                Some(Token { type_: TokenType::RightBrace, ..}) => break,
+                Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![TokenType::Comma, TokenType::RightBrace])),
                 None => return Err(NodeParseError::UnexpectedEndOfInput),
             }
         };

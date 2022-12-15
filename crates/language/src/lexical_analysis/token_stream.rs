@@ -1,5 +1,5 @@
 use std::{iter::{Iterator, Peekable}};
-use crate::lang::tokens::Token;
+use super::token::Token;
 
 pub struct TokenStream {
     upstream_next: Box<dyn Fn() -> Option<Token>>,

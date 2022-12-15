@@ -2,7 +2,7 @@ use std::iter::{Peekable, zip};
 
 use lazymath::abstract_algebra::{MathStructureInstance, StructBinding};
 
-use crate::{syntactic_analysis::{ast_nodes::{Identifier, expect_token}, ast::{NodeParseError, NodeVisitationError}}, lang::tokens::{Token, MathOperatorSymbols}, Scope, ScopedItem};
+use crate::{syntactic_analysis::{ast_nodes::{Identifier, expect_token}, ast::{NodeParseError, NodeVisitationError}}, lexical_analysis::{TokenType, MathOperatorSymbols}, Scope, ScopedItem, lexical_analysis::Token};
 
 pub enum StructSignatureBinding {
     Element(Identifier),
@@ -32,15 +32,15 @@ impl StructSignature {
 
         Ok(
             match tokens.next() {
-                Some(Token::SemiColon) => Self {
+                Some(Token{ type_: TokenType::SemiColon, ..}) => Self {
                     identity,
                     bindings: Self::_scan_bindings(tokens)?,
                 },
-                Some(Token::RightParen) => Self {
+                Some(Token{ type_: TokenType::RightParen, ..}) => Self {
                     identity,
                     bindings: vec![],
                 },
-                Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![Token::SemiColon, Token::RightParen])),
+                Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![TokenType::SemiColon, TokenType::RightParen])),
                 None => return Err(NodeParseError::UnexpectedEndOfInput),
             }
         )
@@ -72,14 +72,14 @@ impl StructSignature {
         loop {
             bindings.push(Self::_scan_for_binding(tokens)?);
             match tokens.next() {
-                Some(Token::Comma) => {
-                    if let Some(&Token::RightBrace) = tokens.peek() {
+                Some(Token { type_: TokenType::Comma, .. }) => {
+                    if let Some(&Token { type_: TokenType::RightBrace, ..}) = tokens.peek() {
                         break;
                     };
                     continue;
                 },
-                Some(Token::RightParen) => break,
-                Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![Token::Comma, Token::RightParen])),
+                Some(Token { type_: TokenType::RightParen, ..}) => break,
+                Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![TokenType::Comma, TokenType::RightParen])),
                 None => return Err(NodeParseError::UnexpectedEndOfInput),
             };
         };
@@ -90,9 +90,9 @@ impl StructSignature {
     fn _scan_for_binding<T: Iterator<Item=Token>>(tokens: &mut Peekable<T>) -> Result<StructSignatureBinding, NodeParseError> {
         Ok(
             match tokens.next() {
-                Some(Token::Symbol(s)) => StructSignatureBinding::Operation(s),
-                Some(Token::Identifier(i)) => StructSignatureBinding::Element(Identifier::from_lexeme(i)),
-                Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![Token::Symbol(MathOperatorSymbols::Bang), Token::Identifier(vec![])])),
+                Some(Token { type_: TokenType::Symbol(s), .. }) => StructSignatureBinding::Operation(s),
+                Some(Token { type_: TokenType::Identifier(i), ..}) => StructSignatureBinding::Element(Identifier::from_lexeme(i)),
+                Some(x) => return Err(NodeParseError::UnexpectedToken(x, vec![TokenType::Symbol(MathOperatorSymbols::Bang), TokenType::Identifier(vec![])])),
                 None => return Err(NodeParseError::UnexpectedEndOfInput),
             }
         )
