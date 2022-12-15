@@ -1,0 +1,97 @@
+(* Keywords *)
+
+forallKwd = "forall" | "\-/" ;
+therexKwd = "therex" | "-]" ;
+inKwd = "in" | "(-";
+assertKwd = "assert" | "|-";
+
+(* Identifiers *)
+
+letter = "A" | "B" | "C" | "D" | "E" | "F" | "G"
+       | "H" | "I" | "J" | "K" | "L" | "M" | "N"
+       | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
+       | "V" | "W" | "X" | "Y" | "Z" | "a" | "b"
+       | "c" | "d" | "e" | "f" | "g" | "h" | "i"
+       | "j" | "k" | "l" | "m" | "n" | "o" | "p"
+       | "q" | "r" | "s" | "t" | "u" | "v" | "w"
+       | "x" | "y" | "z" ;
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+alphaNumUnderscore = letter | digit | "_";
+
+identifier = { alphaNumUnderscore }+;
+mathSymbol = "+" | "-" | "*" | "/" | "/\" | "!" | "^";
+
+(* Arithmetic Math *)
+
+grouping = "(" mathExpr ")";
+
+primary = grouping | identifier;
+unary = [ mathSymbol ] primary;
+binary = unary ( mathSymbol unary )*;
+mathExpression = binary;
+equality = mathExpression "=" mathExpression;
+
+letStatement = "let" ( 
+    set creation |
+    set element creation |
+    struct instantiation
+);
+
+(* Logic Statements *)
+
+forallStmt ::= forallKwd identifier ("," identifier)* inKwd identifier;
+therexeStmt ::= therexKwd identifier ("," identifier)* inKwd identifier;
+logicalStmt ::= (forallStmt | therexeStmt)+;
+
+
+
+set creation ::= "(" identifier ")" "be" identifier
+
+set_element_creation ::= identifier "(-" identifier
+
+struct_instantiation ::= struct_signature "be" identifier["<" argument_list ">"]
+
+
+"def" operation_definition
+
+
+logic_block ::= logical_expr "{"
+    math_expr*
+"}"
+
+
+struct_def ::=
+"struct" identifier "("
+    identifier ";"
+    (
+        (op_def | identifier) ","
+    )*
+")" "{"
+    logic_block*
+"}"
+
+
+    struct Group (
+        G,
+        * : G * G -> G,
+        inv : G -> G,
+        I,
+    ) {
+        \-/ a (- G {
+            a * I = a
+            inv(a) * a = I
+        }
+
+        \-/ a, b, c (- G {
+            (a * b) * c = a * (b * c)
+        }
+    }
+
+
+argument_list ::= identifier ("," Identifier)* [","]
+
+op_def ::= symbol ":" identifier [symbol identifier] -> identifier
+
+struct_signature ::= "(" identifier ";" argument_list ")"
