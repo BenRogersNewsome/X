@@ -11,7 +11,7 @@ pub fn propagate_<'a, T: 'a>(
     strand: T,
     identities: &'a [T::Identity],
     polarity: isize,
-    history: &mut Vec<Vec<u8>>,
+    history: &mut Vec<u64>,
     max_strand_depth: usize,
     depth_since_last_simplest: usize,
     last_simplest: usize,
@@ -20,9 +20,6 @@ pub fn propagate_<'a, T: 'a>(
     let mut final_strands: Vec<T> = vec![];
 
     for identity in identities {
-        let iden_string: String = identity.to_string();
-        let left_string: String = strand.to_string();
-
         // info!(
         //     "Trying {}",
         //     iden_string,
@@ -35,15 +32,11 @@ pub fn propagate_<'a, T: 'a>(
             });
         
         for (new_strand, _) in new_strands_with_instructions {
-            let right_string: String = new_strand.to_string();
 
             if (&history).contains(&new_strand.uuid()) {
                 continue
             }
-            info!(
-                "{} => {} = {}",
-                iden_string, left_string, right_string
-            );
+
 
             history.push(new_strand.uuid());
 

@@ -10,6 +10,9 @@ pub struct Token {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TokenType {
     Colon, SemiColon, Equality, Comma, Turnstile,
+
+    Close,  // ..
+    Spread, // ...
     
     Question,
     
@@ -22,7 +25,7 @@ pub enum TokenType {
     Newline,
     
     // Keywords
-    Let, Over, Struct, In, Id, Where, Create, ForAll, ThereEx, Bea,
+    Let, Over, Struct, In, Id, Where, Create, ForAll, ThereEx, Bea, Be, Of,
     
     Identifier(Vec<u8>), Symbol(MathOperatorSymbols),
     

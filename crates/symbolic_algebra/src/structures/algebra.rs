@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use super::identity::Identity;
 
-/// Utility type. An algebra is a set of two-way identities.
+/// Utility type. An algebra is a set of one-way identities.
 pub struct Algebra(Vec<Identity>);
 
 impl Algebra {

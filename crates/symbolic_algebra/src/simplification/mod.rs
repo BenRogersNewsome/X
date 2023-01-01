@@ -18,7 +18,7 @@ pub use simplify::simplify;
 pub trait Simplifiable<'a> where Self: Manipulatable<'a> {
 
     fn simplicity(&self) -> usize;
-    fn uuid(&self) -> Vec<u8>;
+    fn uuid(&self) -> u64;
 }
 
 impl<'a, T: 'a> Simplifiable<'a> for Strand<'a, T> where T: Simplifiable<'a>, T::Identity: Into<String> {
@@ -27,7 +27,7 @@ impl<'a, T: 'a> Simplifiable<'a> for Strand<'a, T> where T: Simplifiable<'a>, T:
         self.current.simplicity()
     }
 
-    fn uuid(&self) -> Vec<u8> {
+    fn uuid(&self) -> u64 {
         self.current.uuid()
     }
 

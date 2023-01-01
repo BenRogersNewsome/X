@@ -16,6 +16,8 @@ pub enum NodeVisitationError {
     ReDeclaredScopedVariable(Vec<u8>),
     CantResolveToken(String),
     TokenOfWrongType(Vec<u8>, ScopedItem),
+
+    Custom(&'static str),
 }
 
 // pub trait Node {

@@ -85,11 +85,18 @@ macro_rules! do_while_token {
     };
 }
 
+macro_rules! token_of_type {
+    ($token:ident) => {
+        Token {type_: TokenType::$token, ..}
+    };
+}
+
 pub(super) use expect_token;
 pub(super) use skip_whitespace;
 pub(super) use optional_token;
 pub(super) use break_on_token;
 pub(super) use do_while_token;
+pub(super) use token_of_type;
 
 use crate::scope::Scope;
 

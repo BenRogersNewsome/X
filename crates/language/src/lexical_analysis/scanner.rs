@@ -153,6 +153,7 @@ fn keyword(bytes: &[u8]) -> Option<TokenType> {
         b"assert" => Some(Turnstile),
         b"create" => Some(Create),
         b"bea" => Some(Bea),
+        b"be" => Some(Be),
         b"forall" => Some(ForAll),
         b"id" => Some(Id),
         b"in" => Some(In),

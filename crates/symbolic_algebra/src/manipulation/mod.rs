@@ -8,9 +8,9 @@ pub use step::Step;
 pub use strand::Strand;
 
 
-pub trait Manipulatable<'a> where Self: Sized + ToString {
+pub trait Manipulatable<'a> where Self: Sized {
 
-    type Identity: ToString;
+    type Identity;
     type Instruction: Clone;
     type Error;
 

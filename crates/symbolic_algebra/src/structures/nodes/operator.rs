@@ -1,18 +1,13 @@
-use solar_bt::{TreeNode};
-use super::binary_operator::BinaryOperator;
-use super::chain_operator::ChainOperator;
 
-#[derive(PartialEq, Debug, Clone)]
-pub enum Operator {
-    Binary(BinaryOperator),
-    Chain(ChainOperator),
+#[derive(PartialEq, Eq, Debug, Clone, Copy, Hash)]
+pub struct Operator {
+    pub label: u8
 }
 
-impl TreeNode for Operator {
-    fn to_string(&self) -> String {
-        match self {
-            Self::Binary(x) => x.to_string(),
-            Self::Chain(x) => x.to_string(),
+impl Operator {
+    pub fn new(label: u8) -> Self {
+        Self {
+            label
         }
     }
 }
