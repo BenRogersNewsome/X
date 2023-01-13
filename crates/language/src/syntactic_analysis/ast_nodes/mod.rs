@@ -1,6 +1,7 @@
 
 mod assertion;
 mod let_;
+mod def;
 // mod create;
 // mod definition;
 // mod equation;
@@ -17,6 +18,7 @@ use crate::lexical_analysis::Token;
 
 pub use assertion::Assertion;
 pub use let_::Let;
+pub use def::Def;
 pub use identifier::Identifier;
 pub use math_expression::MathExpression;
 pub use structure_definition::StructDefinition;

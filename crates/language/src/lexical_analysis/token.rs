@@ -25,7 +25,7 @@ pub enum TokenType {
     Newline,
     
     // Keywords
-    Let, Over, Struct, In, Id, Where, Create, ForAll, ThereEx, Bea, Be, Of,
+    Let, Over, Struct, In, Id, Where, Create, ForAll, ThereEx, Bea, Be, Of, Def,
     
     Identifier(Vec<u8>), Symbol(MathOperatorSymbols),
     

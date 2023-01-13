@@ -1,10 +1,6 @@
 use super::Simplifiable;
-use log::{debug, info};
+use log::debug;
 
-pub enum Polarity {
-    Simplify,
-    Expand,
-}
 
 /// A depth first algorithm for propagating strands - be warned, this is a heavily recursive function.
 pub fn propagate_<'a, T: 'a>(
@@ -19,11 +15,11 @@ pub fn propagate_<'a, T: 'a>(
 
     let mut final_strands: Vec<T> = vec![];
 
-    for identity in identities {
-        // info!(
-        //     "Trying {}",
-        //     iden_string,
-        // );
+    for (i, identity) in identities.iter().enumerate() {
+        debug!(
+            "Using ident {}",
+            i,
+        );
 
         let mut new_strands_with_instructions = strand.try_manipulate(&identity).expect("Error unwrapping strands");
         new_strands_with_instructions.sort_by(
@@ -32,8 +28,13 @@ pub fn propagate_<'a, T: 'a>(
             });
         
         for (new_strand, _) in new_strands_with_instructions {
+            debug!(
+                "Found new strand for {} with simplicity {}",
+                i, new_strand.simplicity(),
+            );
 
             if (&history).contains(&new_strand.uuid()) {
+                debug!("Ditching: was already in history");
                 continue
             }
 
@@ -43,14 +44,14 @@ pub fn propagate_<'a, T: 'a>(
             // Should we ditch the current strand?
             if new_strand.simplicity() as isize > polarity * (last_simplest as isize)
                 && depth_since_last_simplest > max_strand_depth {
-                info!("Simplicity depth reached");
+                debug!("Simplicity depth reached");
                 continue
             }
 
             let (new_depth_since_last_simplest, new_last_simplest) =
                 match (new_strand.simplicity() as isize) < polarity * (last_simplest as isize) {
                     true => {
-                        info!("Simpler");
+                        debug!("Simpler");
                         (0, new_strand.simplicity())
                     },
                     false => (depth_since_last_simplest + 1, last_simplest),
@@ -78,26 +79,3 @@ pub fn propagate_<'a, T: 'a>(
         return final_strands
     }
 }
-
-// fn should_propagate_strand<'a, T>(
-//     strand: Strand<'a, T>,
-//     polarity: isize,
-//     max_strand_depth: usize,
-//     depth_since_last_simplest: usize,
-//     last_simplest: usize
-// ) -> Option<(usize, usize)> where T: Simplifiable<'a>{
-
-//     // Should this be less than or less than equal to??
-//     if (strand.current.simplicity() as isize) <= polarity * last_simplest as isize {
-
-//         return Some((strand.current.simplicity(), 0))
-//     } else if (strand.current.simplicity() as isize) > polarity * last_simplest as isize && depth_since_last_simplest < max_strand_depth {
-
-//         return Some((last_simplest, depth_since_last_simplest + 1))
-
-//     } else {
-//         return None
-//     }
-
-// }
-

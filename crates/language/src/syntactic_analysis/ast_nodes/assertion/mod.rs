@@ -1,6 +1,6 @@
 use std::iter::Peekable;
 
-use zsft::{Set, SetElement};
+use zsft::{Set, SetElement, LBool};
 
 use crate::{syntactic_analysis::ast::{NodeParseError, NodeVisitationError}, Scope, ScopedItem, lexical_analysis::Token};
 
@@ -53,8 +53,13 @@ impl Assertion {
             None => return Err(NodeVisitationError::CantResolveToken(self.item.clone().into()))
         };
 
-        if !set.contains(&set_element) {
+        let assertion_val = set.contains(&set_element);
+        if assertion_val == LBool::False {
             panic!("Assertion failed")
+        }else if assertion_val == LBool::Unknown {
+
+            
+
         };
 
         Ok(())

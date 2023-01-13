@@ -137,7 +137,11 @@ fn single_character_token(current: u8, next: Option<u8>, nnext: Option<u8>) -> O
         (b'-', Some(b'>'), _) => Some((RightArrow, 2)),
         (b'-', _, _) => Some((Symbol(MathOperatorSymbols::Minus), 1)),
         (b'^', _, _) => Some((Symbol(MathOperatorSymbols::Caret), 1)),
+
+        (b'.', Some(b'.'), Some(b'.')) => Some((Spread, 3)),
+        (b'.', Some(b'.'), _) => Some((Close, 2)),
         (b'.', _, _) => Some((Symbol(MathOperatorSymbols::Dot), 1)),
+
         (b'!', _, _) => Some((Symbol(MathOperatorSymbols::Bang), 1)),
         (b'@', _, _) => Some((Symbol(MathOperatorSymbols::Del), 1)),
         
@@ -158,6 +162,7 @@ fn keyword(bytes: &[u8]) -> Option<TokenType> {
         b"id" => Some(Id),
         b"in" => Some(In),
         b"let" => Some(Let),
+        b"def" => Some(Def),
         b"over" => Some(Over),
         b"struct" => Some(Struct),
         b"therex" => Some(ThereEx),

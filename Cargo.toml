@@ -1,7 +1,6 @@
 [workspace]
 
 members = [
-    "crates/language",
     "crates/lazymath",
     "crates/rc_wrap",
     "crates/SOLaR_BT",

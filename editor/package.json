@@ -1,5 +1,5 @@
 {
-    "name": "ziz",
+    "name": "X",
     "version": "0.0.1",
     "engines": {
         "vscode": ">=0.9.0-pre.1"
@@ -7,13 +7,13 @@
     "publisher": "me",
     "contributes": {
         "languages": [{
-            "id": "ziz",
-            "extensions": [".ziz", ".zz"]
+            "id": "x",
+            "extensions": [".x"]
         }],
         "grammars": [{
-            "language": "ziz",
-            "scopeName": "source.ziz",
-            "path": "./syntaxes/ziz.tmLanguage.json"
+            "language": "x",
+            "scopeName": "source.x",
+            "path": "./syntaxes/x.tmLanguage.json"
         }]
     }
 }

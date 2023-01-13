@@ -22,7 +22,7 @@ impl SetLiteral {
         loop {
             elements.push(match tokens.next() {
                 Some(Token {type_: TokenType::Identifier(id), ..}) => 
-                    SetLiteralElement::Identifier(*Identifier::new(tokens)?),
+                    SetLiteralElement::Identifier(Identifier::from_lexeme(id)),
                 Some(Token {type_: TokenType::Close, ..}) => SetLiteralElement::Close,
                 Some(Token {type_: TokenType::Spread, ..}) => SetLiteralElement::Spread,
                 Some(x) => {

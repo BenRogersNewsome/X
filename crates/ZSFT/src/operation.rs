@@ -1,59 +1,82 @@
-use rc_wrap::rc_wrap;
-use std::ops::Deref;
+use std::{ops::Deref, fmt::Debug};
 
-use super::set::Set;
+use crate::Set;
 
 
-#[rc_wrap(
-    #[derive(Debug, PartialEq, Eq)]
-    pub BinaryOperation
-)]
-#[derive(Debug, PartialEq, Eq)]
-pub struct RawBinaryOperation(BinaryOperationDefinition);
+pub struct BinaryOperation(pub(crate) BinaryOperationDefinition, u64);
 
-impl RawBinaryOperation {
-    pub fn new(definition: BinaryOperationDefinition) -> Self {
-        Self(definition)
+impl PartialEq for BinaryOperation {
+    
+    fn eq(&self, other: &Self) -> bool {
+        let raw_self: *const Self = self;
+        let raw_other: *const Self = other;
+        raw_self == raw_other
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
     }
 }
 
-impl<'a> Deref for RawBinaryOperation {
-    type Target = BinaryOperationDefinition;
+impl Eq for BinaryOperation { }
 
+impl BinaryOperation {
+    pub fn new(definition: BinaryOperationDefinition) -> Self {
+        Self(definition, rand::random())
+    }
+}
+
+impl Deref for BinaryOperation {
+    type Target = BinaryOperationDefinition;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl BinaryOperation {
-    pub fn from_signature(a: &Set, b: &Set, c: &Set) -> Self {
-        Self::new(BinaryOperationDefinition(a.clone(), b.clone(), c.clone()))
+impl Debug for BinaryOperation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!();
+        Ok(())
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct BinaryOperationDefinition(pub Set, pub Set, pub Set);  // (A, B, C) ==> A x B -> C
+impl BinaryOperation {
+    pub fn from_signature(a: &Set, b: &Set, c: &Set) -> Self {
+        Self::new(BinaryOperationDefinition::new(a, b, c))
+    }
+
+    pub fn id(&self) -> u64 {
+        self.1
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct BinaryOperationDefinition(pub(crate) Set, pub(crate) Set, pub(crate) Set);  // (A, B, C) ==> A x B -> C
 
 impl BinaryOperationDefinition {
-    pub fn new(x: &Set, y: &Set, z: &Set) -> Self {
-        Self(x.clone(), y.clone(), z.clone())
+    pub fn new(a: &Set, b: &Set, c: &Set) -> Self {
+        Self(a.clone(), b.clone(), c.clone())
     }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct UnaryOperation(UnaryOperationDefinition);
+pub struct UnaryOperation(pub(crate) UnaryOperationDefinition, u64);
 
-impl<'a> UnaryOperation {
+impl UnaryOperation {
     pub fn new(definition: UnaryOperationDefinition) -> Self {
-        Self(definition)
+        Self(definition, rand::random())
     }
 
     pub fn from_signature(a: &Set, b: &Set) -> Self {
-        Self::new(UnaryOperationDefinition(a.clone(), b.clone()))
+        Self::new(UnaryOperationDefinition::new(a, b))
+    }
+
+    pub fn id(&self) -> u64 {
+        self.1
     }
 }
 
-impl<'a> Deref for UnaryOperation {
+impl Deref for UnaryOperation {
     type Target = UnaryOperationDefinition;
 
     fn deref(&self) -> &Self::Target {
@@ -61,10 +84,10 @@ impl<'a> Deref for UnaryOperation {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct UnaryOperationDefinition(pub Set, pub Set);  // (A, B) ==> A -> B
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct UnaryOperationDefinition(pub(crate) Set, pub(crate) Set);  // (A, B) ==> A -> B
 
-impl<'a> UnaryOperationDefinition {
+impl UnaryOperationDefinition {
     pub fn new(x: &Set, y: &Set) -> Self {
         Self(x.clone(), y.clone())
     }

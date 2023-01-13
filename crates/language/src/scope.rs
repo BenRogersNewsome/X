@@ -3,7 +3,7 @@ use zsft::{Set, SetElement, BinaryOperation};
 use lazymath::core::Expression;
 use lazymath::abstract_algebra::{MathStructure, FutureValue, FutureStructBinding};
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Debug)]
 pub enum ScopedItem {
     Set(Set),
     SetElement(SetElement),

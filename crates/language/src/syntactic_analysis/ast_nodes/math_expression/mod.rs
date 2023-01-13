@@ -1,7 +1,7 @@
 use std::iter::Peekable;
 
 use lazymath::abstract_algebra::{IdentityDefinitionElement, FutureValue, IdentityExpressionDefinitionTerm, IdentityExpressionDefinition};
-use lazymath::core::ExpressionTerm;
+use lazymath::core::ExpressionNode;
 use zsft::{SetElement, BinaryOperation};
 
 use crate::lexical_analysis::Token;
@@ -50,29 +50,29 @@ impl MathExpression {
         }))
     }
 
-    fn _into_expression<'a>(self, scope: &'a Scope) -> Result<Vec<ExpressionTerm>, NodeVisitationError> {
+    fn _into_expression<'a>(self, scope: &'a Scope) -> Result<Vec<ExpressionNode>, NodeVisitationError> {
         Ok(match self {
             Self::Identifier(id) => Self::_identifier_to_expression(scope, id)?,
             Self::InfixBinary(ib) => Self::_infix_binary_to_expression(scope, ib)?,
         })
     }
 
-    fn _identifier_to_expression<'a>(scope: &'a Scope, id: Identifier) -> Result<Vec<ExpressionTerm>, NodeVisitationError>  {
-        let set_element: SetElement = match scope.get(&id.lexeme) {
+    fn _identifier_to_expression<'a>(scope: &'a Scope, id: Identifier) -> Result<Vec<ExpressionNode>, NodeVisitationError>  {
+        let set_element: &SetElement = match scope.get(&id.lexeme) {
             Some(rc) => match rc {
-                ScopedItem::SetElement(s) => s.clone(),
+                ScopedItem::SetElement(s) => s,
                 o => return Err(NodeVisitationError::UnexpectedRegisteredItem(o.to_owned())),
             },
             None => return Err(NodeVisitationError::RegisteredItemNotFound),
         };
 
-        return Ok(vec![ExpressionTerm::Element(set_element)])
+        return Ok(vec![ExpressionNode::Leaf(set_element)])
     }
 
-    fn _infix_binary_to_expression<'a>(scope: &'a Scope, ib: InfixBinary) -> Result<Vec<ExpressionTerm>, NodeVisitationError>  {
-        let operation: BinaryOperation = match scope.get(&ib.operator.to_bytes()) {
+    fn _infix_binary_to_expression<'a>(scope: &'a Scope, ib: InfixBinary) -> Result<Vec<ExpressionNode>, NodeVisitationError>  {
+        let operation: &BinaryOperation = match scope.get(&ib.operator.to_bytes()) {
             Some(rc) => match rc {
-                ScopedItem::BinaryOperation(b) => b.clone(),
+                ScopedItem::BinaryOperation(b) => b,
                 o => return Err(NodeVisitationError::UnexpectedRegisteredItem(o.to_owned())),
             },
             None => return Err(NodeVisitationError::RegisteredItemNotFound),
@@ -81,7 +81,7 @@ impl MathExpression {
         let left = ib.left_operand._into_expression(scope)?;
         let right = ib.right_operand._into_expression(scope)?;
 
-        let mut expression = vec![ExpressionTerm::BinaryOperation(operation)];
+        let mut expression = vec![ExpressionNode::Binary(operation)];
         expression.extend(left);
         expression.extend(right);
 

@@ -27,9 +27,8 @@ pub fn apply<
     let pattern_tokens: Iter<'a, TreeNode<P>> = pattern.iter();
     let mut active_patterns: Vec<ActivePattern<'a, 'b, T, P>> = vec![];
     let mut results: Vec<MatcherResult<'b, T>> = Vec::new();
-    let mut position: usize = 0;
 
-    for tree_token in tree.iter() {
+    for (position, tree_token) in tree.iter().enumerate() {
         active_patterns.push(ActivePattern::new(pattern_tokens.clone(), position, &tree));
 
         active_patterns = active_patterns.into_iter().filter_map(|active_pattern| {
@@ -42,8 +41,6 @@ pub fn apply<
                 },
             }
         }).collect();
-        
-        position += 1;
     };
 
     results

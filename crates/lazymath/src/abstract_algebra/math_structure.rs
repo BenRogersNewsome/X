@@ -3,12 +3,12 @@ use future::FutureValue;
 
 use std::{ops::Deref, rc::Rc, iter::zip};
 
-use zsft::{Set, BinaryOperation, SetElement};
+use zsft::{Set, BinaryOperation, SetElement, Item};
 use crate::core::{Identity, IdentityElement, IdentityTerm, IdentityExpression};
 
 
 pub enum StructBinding {
-    Element(SetElement),
+    Element(Item),
     Operation(BinaryOperation),
     Set(Set),
 }
@@ -19,17 +19,17 @@ pub enum StructBinding {
 /// 
 /// A MathStructureInstance (MSI) is a implemented as a set, together with a set of operations and identities which define the
 /// action of those operations on the set.
-pub struct MathStructureInstance {
+pub struct MathStructureInstance<'a> {
     pub underlying_set: Set,
-    pub over_structures: Vec<Rc<MathStructureInstance>>,
+    pub over_structures: Vec<Rc<MathStructureInstance<'a>>>,
 
     pub bindings: Vec<StructBinding>,
 
     pub identities: Vec<Identity>,
-    pub instance_of: Rc<MathStructure>,
+    pub instance_of: Rc<MathStructure<'a>>,
 }
 
-impl Deref for MathStructureInstance {
+impl Deref for MathStructureInstance<'_> {
     type Target = Set;
 
     fn deref(&self) -> &Self::Target {
@@ -72,12 +72,12 @@ impl AbstractBinaryOperationDefinition {
 /// A specification of the elements which are to be used in the `identity_definition` array, where each index refers to the
 /// set which the element is contained within.
 #[derive(Debug, PartialEq, Eq)]
-pub enum IdentityDefinitionElement {
-    ForAll(FutureValue<SetElement>),
-    Bound(FutureValue<SetElement>),
+pub enum IdentityDefinitionElement<'a> {
+    ForAll(FutureValue<SetElement<'a>>),
+    Bound(FutureValue<Item>),
 }
 
-impl IdentityDefinitionElement {
+impl IdentityDefinitionElement<'_> {
 
     pub fn to_identity_element(&self) -> IdentityElement {
         match self {
@@ -95,17 +95,17 @@ impl IdentityDefinitionElement {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum IdentityExpressionDefinitionTerm {
-    Element(IdentityDefinitionElement),
+pub enum IdentityExpressionDefinitionTerm<'a> {
+    Element(IdentityDefinitionElement<'a>),
     BinaryOperation(FutureValue<BinaryOperation>),
 }
 
 #[derive(PartialEq, Eq, Debug)]
-pub struct IdentityExpressionDefinition {
-    definition: Vec<IdentityExpressionDefinitionTerm>,
+pub struct IdentityExpressionDefinition<'a> {
+    definition: Vec<IdentityExpressionDefinitionTerm<'a>>,
 }
 
-impl IdentityExpressionDefinition {
+impl IdentityExpressionDefinition<'_> {
 
     pub fn new(definition: Vec<IdentityExpressionDefinitionTerm>) -> Self {
         Self {
@@ -141,12 +141,12 @@ impl IdentityExpressionDefinition {
 }
 
 #[derive(PartialEq, Eq, Debug)]
-pub struct IdentityDefinition {
-    left: IdentityExpressionDefinition,
-    right: IdentityExpressionDefinition,
+pub struct IdentityDefinition<'a> {
+    left: IdentityExpressionDefinition<'a>,
+    right: IdentityExpressionDefinition<'a>,
 }
 
-impl IdentityDefinition {
+impl IdentityDefinition<'_> {
 
     pub fn new(left: IdentityExpressionDefinition, right: IdentityExpressionDefinition) -> Self {
         Self {
@@ -166,7 +166,7 @@ impl IdentityDefinition {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum FutureStructBinding {
     Operation(FutureValue<BinaryOperation>),
-    Element(FutureValue<SetElement>),
+    Element(FutureValue<Item>),
     Set(FutureValue<Set>),
 }
 
@@ -182,23 +182,23 @@ impl FutureStructBinding {
 }
 
 #[derive(Debug)]
-pub enum MathStructureInstantiationError {
+pub enum MathStructureInstantiationError<'a> {
     IncorrectNumberOfArguments(usize, usize),  // (expected, found)
-    StructureOfWrongType(usize, Rc<MathStructure>, Rc<MathStructure>)  // (position, expected, found)
+    StructureOfWrongType(usize, Rc<MathStructure<'a>>, Rc<MathStructure<'a>>)  // (position, expected, found)
 }
 
 /// An abstract definition of a math structure
 #[derive(Debug, PartialEq, Eq)]
-pub struct MathStructure {
+pub struct MathStructure<'a> {
     pub future_set: FutureValue<Set>,
-    pub over_structures: Vec<Rc<MathStructure>>,
+    pub over_structures: Vec<Rc<MathStructure<'a>>>,
     pub future_bindings: Vec<FutureStructBinding>,
-    pub future_internals: Vec<FutureValue<SetElement>>,
+    pub future_internals: Vec<FutureValue<Item>>,
 
-    pub identity_definitions: Vec<IdentityDefinition>,
+    pub identity_definitions: Vec<IdentityDefinition<'a>>,
 }
 
-impl MathStructure {
+impl<'a> MathStructure<'a> {
 
     pub fn new(
         future_set: FutureValue<Set>,
@@ -219,7 +219,7 @@ impl MathStructure {
     /// Create an instance of a math structure, specified over the structures in `over_structures`. `over_structures` is an array
     /// of existing structure instances, which are instances of the structures specified in `MathStructure.over_structures`
     /// respectively.
-    pub fn instantiate(self: &Rc<Self>, over_structures: Vec<Rc<MathStructureInstance>>) -> Result<MathStructureInstance, MathStructureInstantiationError> {
+    pub fn instantiate(self: &Rc<Self>, over_structures: Vec<Rc<MathStructureInstance>>) -> Result<MathStructureInstance, MathStructureInstantiationError<'a>> {
 
         self.validate_over_structures(&over_structures)?;
 
@@ -259,7 +259,7 @@ impl MathStructure {
         })
     }
 
-    fn validate_over_structures(self: &Rc<Self>, over_structures: &Vec<Rc<MathStructureInstance>>) -> Result<(), MathStructureInstantiationError> {
+    fn validate_over_structures(self: &Rc<Self>, over_structures: &Vec<Rc<MathStructureInstance>>) -> Result<(), MathStructureInstantiationError<'a>> {
         if !over_structures.len() == self.over_structures.len() {
             return Err(
                 MathStructureInstantiationError::IncorrectNumberOfArguments(

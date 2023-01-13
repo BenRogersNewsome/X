@@ -11,4 +11,6 @@ pub use structures::{
     OperatorPattern,
 };
 
-pub use simplification::{simplify};
+pub use simplification::{simplify, Simplifiable};
+
+pub use solar_bt::{Tree, TreeNode, Node};

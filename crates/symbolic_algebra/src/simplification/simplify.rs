@@ -1,7 +1,7 @@
 use super::Simplifiable;
 use super::winston::propagate_;
 
-pub fn simplify<'a, T: 'a>(item: T, identities: &'a [T::Identity]) -> Result<T, &'static str> where T: Simplifiable<'a> + Clone {
+pub fn simplify<'a, T: 'a>(item: T, identities: &'a [T::Identity], depth: usize) -> Result<T, &'static str> where T: Simplifiable<'a> + Clone {
 
     let mut history = vec![];
     let simplicity = item.simplicity();
@@ -10,7 +10,7 @@ pub fn simplify<'a, T: 'a>(item: T, identities: &'a [T::Identity]) -> Result<T, 
         item,
         identities, 1,
         &mut history,
-        3,
+        depth,
         0,
         simplicity,
     );

@@ -1,0 +1,321 @@
+{
+   "scopeName": "source.x",
+   "patterns": [
+      {"include": "#comment"},
+      {"include": "#logic-block"},
+      {"include": "#let"},
+      {"include": "#struct"}
+   ],
+   "repository": {
+
+      "argument-list": {
+         "patterns": [
+            {
+               "include": "#variable"
+            },
+            {
+               "match": ",", "name": "punctuation.separator"
+            }
+         ]
+      },
+
+      "assert-keyword": {
+         "match": "\\|-|assert",
+         "name": "keyword"
+      },
+
+      "in-keyword": {
+         "match": "\\(-|in",
+         "name": "keyword.operator"
+      },
+
+      "comment": {
+         "begin": "#{1,6}",
+         "end": "\\n",
+         "beginCaptures": {
+            "0": {"name": "comment"}
+         },
+         "patterns": [
+            {
+               "match": ".+",
+               "name": "comment"
+            }
+         ]
+      },
+      
+      "let":  {
+         "begin": "let",
+         "end": "\\n",
+         "beginCaptures": {
+            "0": {"name": "keyword"}
+         },
+         "patterns": [
+            {
+               "include": "#let-struct-instantiation"
+            }
+         ]
+      },
+
+      "let-struct-instantiation": {
+         "patterns": [
+            {
+               "include": "#struct-signature"
+            },
+            {
+               "match": "be",
+               "name": "keyword"
+            },
+            {
+               "include": "#struct-instantiation"
+            }
+         ]
+      },
+
+      "let-element-creation": {
+         "patterns": [
+            {"include": "#in-keyword"},
+            {"include": "#argument-list"},
+            {"include": "#variable"}
+         ]
+      },
+
+      "logic-block": {
+         "begin": "\\|-|assert",
+         "end": "\\n",
+         "beginCaptures": {
+            "0": {"name": "keyword"}
+         },
+         "patterns": [
+            {"include": "#logic-statement"},
+            {"include": "#math-block"}
+         ]
+      },
+
+      "logic-statement": {
+         "patterns": [
+            {"include": "#logical-operator"},
+            {"include": "#in-keyword"},
+            {"include": "#argument-list"},
+            {"include": "#variable"}
+         ]
+      },
+
+      "logical-operator": {
+         "name": "keyword.operator",
+         "match": "\\\\-\\/|-]|\\(-|->"
+      },
+
+      "math-block": {
+         "begin": "{",
+         "end": "}",
+         "beginCaptures": {
+            "0": { "name": "punctuation.section" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.section" }
+          },
+         "patterns": [
+            {"include": "#math-equality"}
+         ]
+      },
+
+      "struct": {  
+         "begin": "struct",
+         "beginCaptures": {
+            "0": {"name": "keyword"}
+         },
+         "end": "\\n",
+         "patterns": [
+            {"include": "#struct-signature-def"},
+            {"include": "#struct-identity-definitions"},
+            {"include": "#struct-def-name"}
+         ]
+      },
+
+      "struct-def-name": {
+         "patterns": [
+            {"include": "#struct-name"},
+            {"include": "#struct-def-overs"}
+         ]
+      },
+
+      "struct-def-overs": {
+         "begin": "<",
+         "end": ">",
+         "beginCaptures": {
+            "0": {"name": "punctuation.section"}
+         },
+         "endCaptures": {
+            "0": {"name": "punctuation.section"}
+         },
+         "patterns": [
+            {"include": "#struct-name"},
+            {"include": "#struct-signature"},
+            {"match": ",", "name": "punctuation.separator"}
+         ]
+      },
+
+      "struct-instantiation": {
+         "patterns": [
+            {"include": "#struct-name"},
+            {"include": "#struct-instantiation-overs"}
+         ]
+      },
+
+      "struct-instantiation-overs": {
+         "begin": "<",
+         "end": ">",
+         "beginCaptures": {"0": { "name": "punctuation.section"}},
+         "endCaptures": {"0": { "name": "punctuation.section"}},
+         "patterns": [
+            {"include": "#parameter"}
+         ]
+      },
+      
+      "struct-signature": {
+         "begin": "\\(",
+         "end": "\\)",
+         "beginCaptures": {
+            "0": { "name": "punctuation.section" }
+            },
+            "endCaptures": {
+            "0": { "name": "punctuation.section" }
+            },
+         "patterns": [
+            {
+               "include": "#struct-member"
+            },
+            {
+               "match": ";",
+               "name": "punctuation.separator.array.json"
+            },
+            {
+               "include": "#math-operator"
+            },
+            {
+               "match": ",",
+               "name": "punctuation.separator.array.json"
+            }
+         ]
+      },
+
+      "struct-signature-def": {
+         "begin": "\\(",
+         "end": "\\)",
+         "beginCaptures": {
+            "0": { "name": "punctuation.section" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.section" }
+          },
+          "patterns": [
+            {
+					"include": "#parameter"
+				},
+            {
+					"match": ";",
+					"name": "punctuation.separator.array.json"
+				},
+				{
+					"match": ",",
+					"name": "punctuation.separator.array.json"
+				},
+            {
+               "include": "#operation-definition"
+            }
+          ]
+      },
+
+      "struct-identity-definitions": {
+         "begin": "{",
+         "end": "}",
+         "beginCaptures": {
+            "0": { "name": "punctuation.section" }
+         },
+         "endCaptures": {
+            "0": { "name": "punctuation.section" }
+         },
+         "patterns": [
+            {"include": "#logic-block"}
+         ]
+      },
+
+      "struct-parameter-list": {
+         "begin": "\\<",
+         "end": "\\>",
+         "patterns": [
+            {"include": "#parameter"},
+            {
+					"match": ",",
+					"name": "punctuation.separator.array.json"
+				}
+         ]
+      },
+
+      "operation-definition": {
+         "patterns": [
+            {"match": "->", "name": "keyword.operator.key-value"},
+            {"match": ":", "name": "keyword.operator.key-value"},
+            {"include": "#math-operator"},
+            {"include": "#ident"}
+         ]
+      },
+
+      "ident": {
+         "match": "\\w+"
+      },
+
+      "struct-member": {
+         "match": "\\w+",
+         "name": "variable.parameter"
+      },
+
+      "variable": {
+         "name": "variable.other",
+         "match": "\\w+"
+      },
+
+      "parameter": {
+         "match": "\\w+",
+         "name": "variable.parameter"
+      },
+
+      "struct-name": {
+         "name": "entity.name",
+         "match": "\\w+"
+      },
+
+      "keyword": {
+         "name": "keyword",
+         "match": "struct|let"
+      },
+
+      "math-expression": {
+         "patterns": [
+            {"include": "#math-paren"},
+            {"include": "#math-operator"},
+            {"include": "#variable"}
+         ]
+      },
+
+      "math-equality": {
+         "patterns": [
+            { "include": "#math-expression"},
+            { "match": "=", "name": "keyword.operator"}
+         ]
+      },
+
+      "math-paren": {
+         "begin": "\\(",
+         "end": "\\)",
+         "patterns": [
+            {"include": "#math-expression"}
+         ]
+      },
+
+      "math-operator": {
+         "name": "keyword.operator",
+         "match": "\\+|\\*|\\/|-"
+      }
+   }
+}

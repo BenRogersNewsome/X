@@ -1,4 +1,4 @@
-use std::{iter::Peekable, slice::Iter, vec::IntoIter};
+use std::{iter::Peekable, slice::Iter, vec::IntoIter, fmt::Debug};
 
 use crate::{pattern::{NodeSpecification, PatternTree, LeafPattern}, Node, TreeNode, Capture};
 
@@ -6,14 +6,14 @@ use super::Tree;
 
 use crate::LeafReplacement;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum MatchTreeNode<'a, T: Tree> {
     Literal(&'a TreeNode<T>),
     Capture(usize),
 }
 
 /// A tree holding the matched subtree of the pattern in the host tree.
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct MatchTree<'a, T: Tree + 'a> {
     nodes: Vec<TreeNode<Self>>,
 }
@@ -110,7 +110,7 @@ impl<'a, T: Tree> MatcherResult<'a, T> {
                         .skip(self.end_position)
                 );
         
-        return T::new(resultant_tree_nodes)
+        T::new(resultant_tree_nodes)
     }
 
     pub fn position(&self) -> usize {
@@ -162,10 +162,11 @@ impl<
     }
 
     pub fn continue_pattern(mut self, tree_token: &'b TreeNode<T>) -> ContinuePatternResult<'a, 'b, T, P> {
+        self.current_position += 1;
         return match (self.pattern.peek(), tree_token) {
     
             (Some(Node::Leaf(LeafPattern::Specification(spec))), Node::Leaf(x)) => {
-                if !spec.is_match(&x) {
+                if !spec.is_match(x) {
                     return ContinuePatternResult::End;
                 }
                 self.try_move_to_next_pattern_token()
@@ -201,7 +202,7 @@ impl<
             },
 
             (None, _) => {
-                ContinuePatternResult::Complete(self.to_match_result())
+                unreachable!("Should have caught this in `try_move_to_next_pattern_token`");
             },
 
             _ => {
@@ -222,7 +223,6 @@ impl<
 
     /// Move to the next token and return a `ContinuePatternResult` based on whether there is a token or not.
     fn try_move_to_next_pattern_token(mut self) -> ContinuePatternResult<'a, 'b, T, P> {
-        self.current_position += 1;
         self.pattern.next();
         match self.pattern.peek() {
             Some(Node::Leaf(LeafPattern::Subtree)) => {

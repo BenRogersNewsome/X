@@ -1,7 +1,7 @@
-use std::hash::Hasher;
+use std::hash::{Hasher, Hash};
 use std::collections::hash_map::DefaultHasher;
 
-use solar_bt::{apply, MatcherResult};
+use solar_bt::{apply, MatcherResult, Node};
 use zsft::{SetElement, BinaryOperation, UnaryOperation};
 use crate::manipulation::Manipulatable;
 use crate::simplification::Simplifiable;
@@ -11,18 +11,18 @@ use super::identity::Identity;
 use super::token_tree::VecTree;
 
 
-pub type Expression = VecTree<SetElement, BinaryOperation, UnaryOperation>;
+pub type Expression<'a> = VecTree<&'a SetElement<'a>, &'a BinaryOperation, &'a UnaryOperation>;
 
 pub enum ExpressionManipulationError {
     Error,
 }
 
-impl<'a> Manipulatable<'a> for Expression {
-    type Identity = Identity;
-    type Instruction = (usize, &'a Identity);
+impl<'a> Manipulatable<'a> for Expression<'a> {
+    type Identity = Identity<'a>;
+    type Instruction = (usize, &'a Identity<'a>);
     type Error = ExpressionManipulationError;
 
-    fn manipulate(&self, instruction: &'a Self::Instruction) -> Result<Option<Self>, Self::Error> {
+    fn manipulate(&self, _instruction: &'a Self::Instruction) -> Result<Option<Self>, Self::Error> {
         todo!();
         // let results = apply(
 
@@ -56,22 +56,20 @@ impl<'a> Manipulatable<'a> for Expression {
     }
 }
 
-impl<'a> Simplifiable<'a> for Expression {
+impl<'a> Simplifiable<'a> for Expression<'a> {
     fn simplicity(&self) -> usize {
         self.nodes.len()
     }
 
     fn uuid(&self) -> u64 {
-        let mut hasher = DefaultHasher::new();
-        // self.nodes.iter()
-        //     .for_each(|token| {
-        //         match token {
-        //             Node::Unary(x) => x.hash(&mut hasher),
-        //             Node::Binary(x) => x.hash(&mut hasher),
-        //             Node::Leaf(x) => x.hash(&mut hasher),
-        //         }
-        //     });
-        hasher.finish()
+        self.nodes.iter()
+            .map(|token| {
+                match token {
+                    Node::Unary(x) => x.id(),
+                    Node::Binary(x) => x.id(),
+                    Node::Leaf(x) => x.id(),
+                }
+            }).sum()
     }
 }
 

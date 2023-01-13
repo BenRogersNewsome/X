@@ -1,7 +1,10 @@
+use std::fmt::Debug;
+use std::ops::Deref;
+
 use crate::Tree;
 
-pub trait NodeSpecification<NodeT> where Self: PartialEq + Clone {
-    fn is_match(&self, node: &NodeT) -> bool;
+pub trait NodeSpecification<NodeT> where Self: PartialEq + Clone + Debug {
+    fn is_match<N: Deref<Target=NodeT>>(&self, node: N) -> bool;
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -9,6 +12,13 @@ pub enum LeafPattern<NodeSpec> {
     Specification(NodeSpec),
     Subtree,
     SubtreeCallback(usize),
+}
+
+/// Auto implement NodeSpecification<T> for the type T itself by simply doing a direct equality check.
+impl<T> NodeSpecification<T> for T where T: PartialEq + Clone + Debug {
+    fn is_match<N: Deref<Target=T>>(&self, node: N) -> bool {
+        *self == *node
+    }
 }
 
 /// A marker trait for trees which can also function as patterns for another base tree, `T`.

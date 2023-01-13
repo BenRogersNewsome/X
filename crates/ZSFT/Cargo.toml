@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 rc_wrap = { path="../rc_wrap" }
+rand = "0.8.5"
+enum_dispatch = "0.3.10"
 
 [lib]
 name = "zsft"

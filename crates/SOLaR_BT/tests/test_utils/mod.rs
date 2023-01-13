@@ -1,5 +1,5 @@
-
-use solar_bt::{Tree, Node, PatternLeafElement, NodeSpecification, LeafReplacement};
+use std::ops::Deref;
+use solar_bt::{Tree, TreeNode, LeafPattern, NodeSpecification, LeafReplacement};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum BinaryOperator {
@@ -47,19 +47,20 @@ impl Tree for Equation {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum ElementSpec {
     Label(Vec<u8>),
 }
 
-impl NodeSpecification<Equation> for ElementSpec {
-    fn is_match(&self, node: &<Equation as Tree>::Leaf) -> bool {
+impl NodeSpecification<Element> for ElementSpec {
+    fn is_match<N: Deref<Target=Element>>(&self, node: N) -> bool {
         match self {
             Self::Label(label) => *label == node.label,
         }
     }
 }
 
+#[derive(Clone, PartialEq, Debug)]
 pub struct IdentityPattern {
     nodes: Vec<TreeNode<Self>>,
 }
@@ -74,7 +75,7 @@ impl IntoIterator for IdentityPattern {
 }
 
 impl Tree for IdentityPattern {
-    type Leaf = PatternLeafElement<Equation, ElementSpec>;
+    type Leaf = LeafPattern<ElementSpec>;
     type Binary = BinaryOperator;
     type Unary = UnaryOperator;
 
@@ -89,6 +90,7 @@ impl Tree for IdentityPattern {
     }
 }
 
+#[derive(Clone, PartialEq, Debug)]
 pub struct IdentityReplacement {
     nodes: Vec<TreeNode<Self>>,
 }

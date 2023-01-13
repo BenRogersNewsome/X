@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 /// If a tree is to be constructable from a string, it needs to be composed of elements which implement `ParsableTreeNode`
 pub trait ParsableTreeNode where Self: Sized {
     fn from_string(id: &str) -> Result<Self, &'static str>;
@@ -5,7 +7,7 @@ pub trait ParsableTreeNode where Self: Sized {
 
 /// All tree nodes are wrapped in the `_Node` type to express whether the node is a leaf or branch node
 #[derive(Debug, PartialEq, Clone)]
-pub enum Node<Leaf: Clone, Binary: PartialEq + Clone, Unary: PartialEq + Clone> {
+pub enum Node<Leaf: Clone + Debug, Binary: PartialEq + Clone + Debug, Unary: PartialEq + Clone + Debug> {
     Leaf(Leaf),
     Binary(Binary),
     Unary(Unary),
@@ -19,10 +21,10 @@ pub type TreeNode<T> = Node<
 >;
 
 /// 
-pub trait Tree where Self: Sized + PartialEq + IntoIterator<Item = Node<Self::Leaf, Self::Binary, Self::Unary>> + Clone {
-    type Leaf: PartialEq + Clone;
-    type Binary: PartialEq + Clone;
-    type Unary: PartialEq + Clone;
+pub trait Tree where Self: Sized + PartialEq + IntoIterator<Item = Node<Self::Leaf, Self::Binary, Self::Unary>> + Clone + Debug {
+    type Leaf: PartialEq + Clone + Debug;
+    type Binary: PartialEq + Clone + Debug;
+    type Unary: PartialEq + Clone + Debug;
 
     fn new<I: IntoIterator<Item = TreeNode<Self>>>(nodes: I) -> Self;
 
