@@ -9,16 +9,16 @@ pub struct WithoutItems {
 }
 
 impl WithoutItems {
-    pub fn assert_on(base_set: &Set, items: Vec<Item>) -> AssertionResponse {
+    pub fn assert_on(base_set: &Set, items: Vec<&Item>) -> AssertionResponse {
         use AssertionResponse::*;
         for item in &items {
-            if base_set.contains(item, &mut Vec::new()) == LBool::True {
+            if base_set.contains_(item, &mut Vec::new()) == LBool::True {
                 return AssertionInvalid;
             };
         }
         base_set.replace(|inner| {
             crate::SetType::WithoutItems(Self {
-                items,
+                items: items.into_iter().cloned().collect(),
                 underlying_set: Box::new(inner),
             })
         });
@@ -49,5 +49,10 @@ impl SetLayer for WithoutItems {
     #[inline]
     fn size(&self, signature: &mut Vec<u64>) -> NumBound<Number> {
         self.underlying_set.size(signature)
+    }
+
+    #[inline]
+    fn contains_set_element(&self,set: &Set,element: &crate::SetElement,signature: &mut Vec<u64>) -> LBool {
+        self.underlying_set.contains_set_element(set, element, signature)
     }
 }

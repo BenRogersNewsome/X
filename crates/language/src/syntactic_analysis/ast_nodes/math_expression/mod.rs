@@ -66,7 +66,7 @@ impl MathExpression {
             None => return Err(NodeVisitationError::RegisteredItemNotFound),
         };
 
-        return Ok(vec![ExpressionNode::Leaf(set_element)])
+        return Ok(vec![ExpressionNode::Leaf(set_element.clone())])
     }
 
     fn _infix_binary_to_expression<'a>(scope: &'a Scope, ib: InfixBinary) -> Result<Vec<ExpressionNode>, NodeVisitationError>  {
@@ -81,7 +81,7 @@ impl MathExpression {
         let left = ib.left_operand._into_expression(scope)?;
         let right = ib.right_operand._into_expression(scope)?;
 
-        let mut expression = vec![ExpressionNode::Binary(operation)];
+        let mut expression = vec![ExpressionNode::Binary(operation.clone())];
         expression.extend(left);
         expression.extend(right);
 
@@ -107,7 +107,7 @@ impl MathExpression {
         let expression_term: IdentityDefinitionElement = match scope.get(&id.lexeme) {
             Some(rc) => match rc {
                 ScopedItem::FutureSetElement(s) => IdentityDefinitionElement::ForAll(s.clone()),
-                ScopedItem::FutureBoundSetElement(s) => IdentityDefinitionElement::Bound(s.clone()),
+                ScopedItem::FutureItem(s) => IdentityDefinitionElement::Bound(s.clone()),
                 o => return Err(NodeVisitationError::UnexpectedRegisteredItem(o.to_owned())),
             },
             None => return Err(NodeVisitationError::RegisteredItemNotFound),

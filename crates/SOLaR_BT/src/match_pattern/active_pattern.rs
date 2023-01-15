@@ -87,9 +87,7 @@ impl<'a, T: Tree> MatcherResult<'a, T> {
     >(&self, replacement: &ReplacementTree) -> T where T: Clone, T::Binary: Clone, T::Unary: Clone, T::Leaf: Clone {
 
         let resultant_tree_nodes = 
-            self.original_tree.iter()
-                .cloned()
-                .take(self.start_position)
+            self.original_tree.iter().take(self.start_position).cloned()
                 .chain(
                     replacement.iter().flat_map::<Box<dyn Iterator<Item = TreeNode<T>>>, _>(|replacement_tree_node: &TreeNode<ReplacementTree>| {
                         match replacement_tree_node {
@@ -105,9 +103,7 @@ impl<'a, T: Tree> MatcherResult<'a, T> {
                     })
                 )
                 .chain(
-                    self.original_tree.iter()
-                        .cloned()
-                        .skip(self.end_position)
+                    self.original_tree.iter().skip(self.end_position).cloned()
                 );
         
         T::new(resultant_tree_nodes)

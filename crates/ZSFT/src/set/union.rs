@@ -1,4 +1,4 @@
-use crate::{LBool, item::Item, logic::{NumBound, Number}, SetType};
+use crate::{LBool, item::Item, logic::{NumBound, Number}, SetType, NumRange};
 use super::{Set, SetLayer};
 
 #[derive(Debug)]
@@ -51,27 +51,43 @@ impl SetLayer for UnionSet {
             self._naive_contains(item, signature)
         } else {
             signature.push(self.signed);
-            self.left.contains(item, signature) | self.right.contains(item, signature)
+            self.left.contains_(item, signature) | self.right.contains_(item, signature)
         }
     }
 
     fn known_elements(&self, signature: &mut Vec<u64>) -> Box<dyn Iterator<Item=Item> + '_> {
         Box::new(
-            self.left.known_elements(signature).chain(self.right.known_elements(signature))
+            self.left.known_elements_(signature).chain(self.right.known_elements_(signature))
         )
     }
 
     fn known_non_elements(&self, signature: &mut Vec<u64>) -> Box<dyn Iterator<Item=Item> + '_> {
         Box::new(
-            self.left.known_non_elements(signature).chain(self.right.known_non_elements(signature))
+            self.left.known_non_elements_(signature).chain(self.right.known_non_elements_(signature))
         )
     }
 
     fn size(&self, signature: &mut Vec<u64>) -> NumBound<Number> {
-        use NumBound::*;
-        todo!();
-        // match (self.left.size(signature), self.right.size(signature)) {
-        // }
+        use crate::logic::NumRangeBoundary::*;
+        if signature.contains(&self.signed) {
+            NumBound::Range(NumRange(Unbounded, Unbounded))
+        }else{
+            signature.push(self.signed);
+            self.left.size_(signature) + self.right.size_(signature)
+        }
+
+    }
+
+    fn contains_set_element(&self,set: &Set,element: &crate::SetElement, signature: &mut Vec<u64>) -> LBool {
+        if signature.contains(&self.signed) {
+            element.in_set_(set, signature)
+        } else {
+            signature.push(self.signed);
+
+            element.in_set_(set, signature) |
+            self.left.contains_set_element_(element, signature) |
+            self.right.contains_set_element_(element, signature)
+        }
     }
 }
 
@@ -97,8 +113,8 @@ impl SetLayer for IsUnionOf {
             signature.push(self.signed);
         };
 
-        let union_set_contains = self.union_set.contains(item, signature);
-        let union_with_contains = self.union_with.contains(item, signature);
+        let union_set_contains = self.union_set.contains_(item, signature);
+        let union_with_contains = self.union_with.contains_(item, signature);
 
         if union_set_contains == LBool::False {
             LBool::False
@@ -117,7 +133,7 @@ impl SetLayer for IsUnionOf {
     fn known_non_elements(&self, signature: &mut Vec<u64>) -> Box<dyn Iterator<Item=Item> + '_> {
         Box::new(
             self.underlying_self.known_elements(signature).chain(
-                self.union_set.known_non_elements(signature)
+                self.union_set.known_non_elements_(signature)
             )
         )
     }
@@ -136,6 +152,23 @@ impl SetLayer for IsUnionOf {
         //     // (Gt(a), Gt(b), Lt(c))
         // }
         
+    }
+
+    fn contains_set_element(&self,set: &Set,element: &crate::SetElement,signature: &mut Vec<u64>) -> LBool {
+        if signature.contains(&self.signed) {
+            element.in_set_(set, signature)
+        }else{
+            let union_set_contains = self.union_set.contains_set_element_(element, signature);
+            let union_with_contains = self.union_with.contains_set_element_(element, signature);
+
+            if union_set_contains == LBool::False {
+                LBool::False
+            } else if (union_set_contains == LBool::True) && (union_with_contains == LBool::False) {
+                LBool::True
+            } else {
+                self.underlying_self.contains_set_element(set, element, signature)
+            }
+        }
     }
 }
 
@@ -157,13 +190,13 @@ mod tests {
 
         // |- a !(- C
         let item_a = Item::new();
-        assert_eq!(WithoutItems::assert_on(&set_c, vec![item_a.clone()]), AssertionMade);
+        assert_eq!(WithoutItems::assert_on(&set_c, vec![&item_a]), AssertionMade);
 
         // a (- A ?
         // This assertion should fail because:
         //  - a is not in the union of A and B,
         //  - Therefore a cannot be in either A or B individually
-        assert_eq!(set_a.contains(&item_a, &mut Vec::new()), False)
+        assert_eq!(set_a.contains(item_a), False)
     }
 
     #[test]
@@ -173,7 +206,7 @@ mod tests {
 
         // |- a (- A
         let item_a = Item::new();
-        assert_eq!(WithItems::assert_on(&set_a, vec![item_a.clone()]), AssertionMade);
+        assert_eq!(WithItems::assert_on(&set_a, vec![&item_a]), AssertionMade);
 
         // C = A u B
         let set_c = UnionSet::of(&set_a, &set_b);
@@ -183,6 +216,6 @@ mod tests {
         //  - a is in A
         //  - C = A u B
         //  - Therefore a is in C
-        assert_eq!(set_c.contains(&item_a, &mut Vec::new()), True)
+        assert_eq!(set_c.contains(item_a), True)
     }
 }

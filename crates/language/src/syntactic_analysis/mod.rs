@@ -23,7 +23,7 @@ impl Ast {
             match tokens.next() {
                 Some(Token { type_: TokenType::Turnstile, ..}) => nodes.push(TopLevelNode::Assertion(*Assertion::new(tokens)?)),
                 Some(Token { type_: TokenType::Let, ..}) => nodes.push(TopLevelNode::Let(*Let::new(tokens)?)),
-                // Some(Token { type_: TokenType::Struct, ..}) => nodes.push(TopLevelNode::Struct(*StructDefinition::new(tokens)?)),
+                Some(Token { type_: TokenType::Struct, ..}) => nodes.push(TopLevelNode::Struct(*StructDefinition::new(tokens)?)),
                 Some(Token { type_: TokenType::Def, ..}) => nodes.push(TopLevelNode::Def(*Def::new(tokens)?)),
                 Some(Token { type_: TokenType::Newline, ..}) => {},
                 Some(x) => return Err(ast::NodeParseError::UnexpectedToken(x, vec![

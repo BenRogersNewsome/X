@@ -25,6 +25,7 @@ impl SetLiteral {
                     SetLiteralElement::Identifier(Identifier::from_lexeme(id)),
                 Some(Token {type_: TokenType::Close, ..}) => SetLiteralElement::Close,
                 Some(Token {type_: TokenType::Spread, ..}) => SetLiteralElement::Spread,
+                Some(Token {type_: TokenType::RightBrace, ..}) => {break;}
                 Some(x) => {
                     return Err(NodeParseError::UnexpectedToken(x, vec![TokenType::Identifier(vec![]), TokenType::Spread, TokenType::Close]));
                 }

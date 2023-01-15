@@ -3,18 +3,18 @@ use std::ops::Deref;
 use super::identity::Identity;
 
 /// Utility type. An algebra is a set of one-way identities.
-pub struct Algebra<'a>(Vec<Identity<'a>>);
+pub struct Algebra(Vec<Identity>);
 
-impl<'a> Algebra<'a> {
+impl Algebra {
 
-    pub fn new(identities: Vec<Identity<'a>>) -> Self {
+    pub fn new(identities: Vec<Identity>) -> Self {
         Self(identities)
     }
 }
 
-impl<'a> Deref for Algebra<'a> {
+impl Deref for Algebra {
 
-    type Target = Vec<Identity<'a>>;
+    type Target = Vec<Identity>;
 
     fn deref(&self) -> &Self::Target {
         &self.0

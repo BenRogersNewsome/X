@@ -7,10 +7,8 @@ use test_utils::{
     BinaryOperator,
     Equation,
     Element,
-    ElementSpec,
     IdentityPattern,
     IdentityReplacement,
-    UnaryOperator,
 };
 
 #[test]

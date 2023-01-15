@@ -37,7 +37,7 @@ impl<'a, T: Tree> Capture<'a, T> {
 
         self.captured.push(node);
 
-        return self.complete();
+        self.complete()
     }
 
     #[inline]

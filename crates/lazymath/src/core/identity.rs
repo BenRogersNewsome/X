@@ -1,14 +1,13 @@
 
-use zsft::{SetElement, BinaryOperation};
+use zsft::{SetElement, BinaryOperation, Item};
 
 
-#[derive(Clone)]
 pub enum IdentityElement {
     ForAll(SetElement),
-    ForOne(SetElement),
+    ForOne(Item),
 }
 
-pub enum IdentityTerm{
+pub enum IdentityTerm {
     Element(IdentityElement),
     BinaryOperation(BinaryOperation),
 }

@@ -7,17 +7,17 @@ use crate::structures::ExpressionPattern;
 /// 
 /// Computationally, a procedure can be thought of as a pre-compilation of a number of base identities into larger and more useful replacements.
 pub struct Procedure<'a> {
-    left: &'a ExpressionPattern<'a>,
-    right: &'a ExpressionPattern<'a>,
+    left: &'a ExpressionPattern,
+    right: &'a ExpressionPattern,
 }
 
 impl<'a> Procedure<'a> {
 
-    pub fn new(left: &'a ExpressionPattern<'a>, right: &'a ExpressionPattern<'a>) -> Self {
+    pub fn new(left: &'a ExpressionPattern, right: &'a ExpressionPattern) -> Self {
         Procedure { left, right }
     }
 
-    pub fn new_from_many(lefts: Vec<&'a ExpressionPattern<'a>>, right: &'a ExpressionPattern<'a>) -> Vec<Self> {
+    pub fn new_from_many(lefts: Vec<&'a ExpressionPattern>, right: &'a ExpressionPattern) -> Vec<Self> {
         lefts.iter().map(|left| {
             Procedure { left, right }
         }).collect()
@@ -27,5 +27,3 @@ impl<'a> Procedure<'a> {
         1
     }
 }
-
-pub type A<'a> = Vec<Procedure<'a>>;

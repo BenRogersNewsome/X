@@ -1,7 +1,7 @@
 use std::{rc::Rc, fmt::Debug, cell::RefCell};
 
 struct _RawFutureValue<T>{
-    pub(self) last_value: Option<T>,
+    pub(self) last_value: RefCell<Option<T>>,
     pub(self) constructor: Box<dyn Fn() -> T>,
 }
 
@@ -26,28 +26,33 @@ impl<T: PartialEq> Eq for _RawFutureValue<T> { }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FutureValue<T>{
-    _raw: Rc<RefCell<_RawFutureValue<T>>>,
+    _raw: Rc<_RawFutureValue<T>>,
 }
 
 impl<T: Clone> FutureValue<T> {
 
     pub fn new(constructor: Box<dyn Fn() -> T>) -> Self {
         Self {
-            _raw: Rc::new(RefCell::new(_RawFutureValue {
-                last_value: None,
+            _raw: Rc::new(_RawFutureValue {
+                last_value: RefCell::new(None),
                 constructor,
-            })),
+            }),
         }
     }
 
     pub fn reify(&self) -> T {
-        let new_value = ((*self._raw).borrow().constructor)();
-        (*self._raw).borrow_mut().last_value = Some(new_value.clone());
-        new_value
+        let new_value: T = (*self._raw.constructor)();
+        self._raw.last_value.replace(Some(new_value));
+        self._raw.last_value.borrow().as_ref().unwrap().clone()
+    }
+
+    pub fn take(&self) -> Option<T> {
+        let old_val: Option<T> = self._raw.last_value.replace(None);
+        old_val
     }
 
     pub fn get<'a>(&'a self) -> Option<T> {
-        match &(*self._raw).borrow().last_value {
+        match self._raw.last_value.borrow().as_ref() {
             Some(x) => Some(x.clone()),
             None => None,
         }

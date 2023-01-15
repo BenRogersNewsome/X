@@ -1,8 +1,8 @@
 use std::{rc::Rc, fmt::Debug, cell::UnsafeCell};
 
 use enum_dispatch::enum_dispatch;
-use crate::{item::Item, logic::{NumBound, LBool, Number}};
-use self::{union::{UnionSet, IsUnionOf}, with_items::WithItems, without_items::WithoutItems, has_size::HasSize};
+use crate::{item::Item, logic::{NumBound, LBool, Number}, SetElement, NumRange, NumRangeBoundary};
+use self::union::IsUnionOf;
 
 
 mod anonymous;
@@ -11,11 +11,17 @@ mod anonymous;
 // mod intersection;
 // use intersection::IntersectionSet;
 mod empty;
+mod has_set_element;
 mod has_size;
 mod union;
 mod with_items;
 mod without_items;
 
+pub use has_set_element::HasSetElement;
+pub use has_size::HasSize;
+pub use union::UnionSet;
+pub use with_items::WithItems;
+pub use without_items::WithoutItems;
 
 #[derive(Debug)]
 pub struct Set {
@@ -47,6 +53,11 @@ impl Eq for Set {}
 /// This closed set of functions is ultimately safe as we never give a direct reference to the internal set.
 impl Set {
 
+    #[inline]
+    pub fn anonymous() -> Self {
+        Self::new(SetType::Anonymous(()))
+    }
+
     pub fn new(set: SetType) -> Self {
         Self {
             _raw: Rc::new(UnsafeCell::new(set)),
@@ -75,24 +86,49 @@ impl Set {
         &*self._raw.get()
     }
 
-    fn contains(&self, item: &crate::item::Item, signature: &mut Vec<u64>) -> LBool {
+    #[inline]
+    pub fn contains(&self, item: Item) -> LBool {
+        self.contains_(&item, &mut Vec::new())
+    }
+
+    pub(crate) fn contains_(&self, item: &crate::item::Item, signature: &mut Vec<u64>) -> LBool {
         let inner_set: &SetType = unsafe { self.get_inner_set() };
         inner_set.contains(item, signature)
     }
 
-    fn known_elements(&self, signature: &mut Vec<u64>) -> Box<dyn Iterator<Item = Item> + '_> {
+    #[inline]
+    pub fn known_elements(&self) -> Box<dyn Iterator<Item = Item> + '_> {
+        self.known_elements_(&mut Vec::new())
+    }
+
+    pub(crate) fn known_elements_(&self, signature: &mut Vec<u64>) -> Box<dyn Iterator<Item = Item> + '_> {
         let inner_set: &SetType = unsafe { self.get_inner_set() };
         inner_set.known_elements(signature)
     }
 
-    fn known_non_elements(&self, signature: &mut Vec<u64>) -> Box<dyn Iterator<Item = Item> + '_> {
+    #[inline]
+    pub fn known__non_elements(&self) -> Box<dyn Iterator<Item = Item> + '_> {
+        self.known_non_elements_(&mut Vec::new())
+    }
+
+    pub(crate) fn known_non_elements_(&self, signature: &mut Vec<u64>) -> Box<dyn Iterator<Item = Item> + '_> {
         let inner_set: &SetType = unsafe { self.get_inner_set() };
         inner_set.known_non_elements(signature)
     }
 
-    fn size(&self, signature: &mut Vec<u64>) -> NumBound<Number> {
+    #[inline]
+    pub fn size(&self) -> NumBound<Number> {
+        self.size_(&mut Vec::new())
+    }
+
+    pub(crate) fn size_(&self, signature: &mut Vec<u64>) -> NumBound<Number> {
         let inner_set: &SetType = unsafe { self.get_inner_set() };
         inner_set.size(signature)
+    }
+
+    pub(crate) fn contains_set_element_(&self, element: &SetElement,signature: &mut Vec<u64>) -> LBool {
+        let inner_set: &SetType = unsafe { self.get_inner_set() };
+        inner_set.contains_set_element(self, element, signature)
     }
 }
 
@@ -102,6 +138,7 @@ pub trait SetLayer where Self: Debug {
     fn known_elements(&self, signature: &mut Vec<u64>) -> Box<dyn Iterator<Item=Item> + '_>;
     fn known_non_elements(&self, signature: &mut Vec<u64>) -> Box<dyn Iterator<Item=Item> + '_>;
     fn size(&self, signature: &mut Vec<u64>) -> NumBound<Number>;
+    fn contains_set_element(&self, set: &Set, element: &SetElement, signature: &mut Vec<u64>) -> LBool;
 }
 
 impl SetLayer for Box<dyn SetLayer> {
@@ -124,24 +161,33 @@ impl SetLayer for Box<dyn SetLayer> {
     fn size(&self,signature: &mut Vec<u64>) -> NumBound<Number> {
         self.as_ref().size(signature)
     }
+
+    fn contains_set_element(&self,set: &Set,element: &SetElement,signature: &mut Vec<u64>) -> LBool {
+        self.as_ref().contains_set_element(set, element, signature)
+    }
 }
 impl SetLayer for () {
-    fn contains(&self,item: &crate::item::Item,signature: &mut Vec<u64>) -> LBool {
+    fn contains(&self, _item: &Item, _signature: &mut Vec<u64>) -> LBool {
         LBool::Unknown
     }
 
-    fn known_elements(&self,signature: &mut Vec<u64>) -> Box<dyn Iterator<Item = Item> +'_> {
+    fn known_elements(&self, _signature: &mut Vec<u64>) -> Box<dyn Iterator<Item = Item> +'_> {
         Box::new(std::iter::empty())
     }
 
     #[inline]
-    fn known_non_elements(&self,signature: &mut Vec<u64>) -> Box<dyn Iterator<Item = Item> +'_> {
+    fn known_non_elements(&self, _signature: &mut Vec<u64>) -> Box<dyn Iterator<Item = Item> +'_> {
         Box::new(std::iter::empty())
     }
 
     #[inline]
-    fn size(&self,signature: &mut Vec<u64>) -> NumBound<Number> {
-        todo!();
+    fn size(&self, _signature: &mut Vec<u64>) -> NumBound<Number> {
+        use NumRangeBoundary::*;
+        NumBound::Range(NumRange(Unbounded, Unbounded))
+    }
+
+    fn contains_set_element(&self, _set: &Set, _element: &SetElement, _signature: &mut Vec<u64>) -> LBool {
+        LBool::Unknown
     }
 }
 
@@ -149,6 +195,7 @@ impl SetLayer for () {
 #[derive(Debug)]
 pub enum SetType {
     Anonymous(()),
+    HasSetElement(HasSetElement),
     HasSize(HasSize),
     Union(UnionSet),
     UnionOf(IsUnionOf),

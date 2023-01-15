@@ -1,4 +1,4 @@
-use crate::{SetType, logic::{AssertionResponse, Number, NumBound}, Set};
+use crate::{SetType, logic::{AssertionResponse, Number, NumBound}, Set, Item, LBool};
 
 use super::SetLayer;
 
@@ -12,11 +12,11 @@ impl HasSize {
 
     pub fn assert_on(size: NumBound<Number>, base_set: &Set) -> AssertionResponse {
         
-        let existing_size: NumBound<Number> = base_set.size(&mut Vec::new());
+        let existing_size: NumBound<Number> = base_set.size_(&mut Vec::new());
 
         let new_size: NumBound<Number> = match existing_size & size {
             None => return AssertionResponse::AssertionInvalid,
-            Some(existing_size) => return AssertionResponse::RedundantAssertion,
+            Some(x) if x == existing_size => return AssertionResponse::RedundantAssertion,
             Some(x) => x,
         };
 
@@ -35,6 +35,20 @@ impl HasSize {
 impl SetLayer for HasSize {
     #[inline]
     fn contains(&self,item: &crate::item::Item,signature: &mut Vec<u64>) -> crate::LBool {
+        use NumBound::*;
+        use Number::*;
+
+        let underlying_contains: LBool = self.underlying_set.contains(&item, signature);
+        if underlying_contains == LBool::True {
+            return LBool::True;
+        };
+
+        let known_elements: Vec<Item> = self.known_elements(signature).collect();
+        if let Eq(Ordinal(s)) = self.size {
+            if s == known_elements.len() {
+                return LBool::from(known_elements.contains(item))
+            }
+        };
         self.underlying_set.contains(item, signature)
     }
 
@@ -51,5 +65,10 @@ impl SetLayer for HasSize {
     #[inline]
     fn size(&self, _signature: &mut Vec<u64>) -> NumBound<Number> {
         self.size
+    }
+
+    #[inline]
+    fn contains_set_element(&self, set: &Set,element: &crate::SetElement,signature: &mut Vec<u64>) -> crate::LBool {
+        self.underlying_set.contains_set_element(set, element, signature)
     }
 }

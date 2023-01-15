@@ -1,4 +1,4 @@
-use crate::{LBool, item::Item, Set, logic::{NumBound, AssertionResponse, Number}, SetType};
+use crate::{LBool, item::Item, Set, logic::{NumBound, AssertionResponse, Number}, SetType, NumRange, NumRangeBoundary};
 
 use super::SetLayer;
 
@@ -10,10 +10,10 @@ pub struct WithItems {
 }
 
 impl WithItems {
-    pub fn assert_on(base_set: &Set, items: Vec<Item>) -> AssertionResponse {
+    pub fn assert_on<'a>(base_set: &'a Set, items: Vec<&'a Item>) -> AssertionResponse {
         let mut items_to_add: Vec<Item> = Vec::with_capacity(items.len());
         for item in items {
-            match base_set.contains(&item, &mut Vec::new()) {
+            match base_set.contains_(&item, &mut Vec::new()) {
                 LBool::False => return AssertionResponse::AssertionInvalid,
                 LBool::True => {
                     // Don't create a redundant assertion if we already know
@@ -21,7 +21,7 @@ impl WithItems {
                     continue;
                 },
                 LBool::Unknown => {
-                    items_to_add.push(item);
+                    items_to_add.push(item.clone());
                 },
             }
         };
@@ -30,7 +30,7 @@ impl WithItems {
             return AssertionResponse::RedundantAssertion;
         };
 
-        let num_known_elements_beneath: usize = base_set.known_elements(&mut Vec::new()).count();
+        let num_known_elements_beneath: usize = base_set.known_elements_(&mut Vec::new()).count();
         let num_known_elements: usize = num_known_elements_beneath + items_to_add.len();
 
         // match (base_set.size(&mut Vec::new()), num_known_elements) {
@@ -52,6 +52,20 @@ impl WithItems {
 
 impl SetLayer for WithItems {
     fn contains(&self, item: &crate::item::Item, signature: &mut Vec<u64>) -> LBool {
+
+        use NumBound::*;
+        use Number::*;
+
+        let underlying_contains: LBool = self.underlying_set.contains(&item, signature);
+        if underlying_contains == LBool::True {
+            return self.contains(&item, signature);
+        };
+
+        if let Eq(Ordinal(s)) = self.size(signature) {
+            if s == self.num_known_elements {
+                return LBool::from(self.known_elements(signature).any(|i|i==*item))
+            }
+        };
         LBool::from(self.items.contains(item)) | self.underlying_set.contains(item, signature)
     }
 
@@ -65,26 +79,19 @@ impl SetLayer for WithItems {
     }
 
     fn size(&self, signature: &mut Vec<u64>) -> NumBound<Number> {
-        todo!()
-        // match self.underlying_set.size(signature) {
-        //     NumBound::Eq(n) => NumBound::Eq(n),
-        //     NumBound::Gt(n) => NumBound::Gt(
-        //         if self.num_known_elements >= n {
-        //             self.num_known_elements
-        //         }else{
-        //             n
-        //         }
-        //     ),
-        //     NumBound::Ge(n) => NumBound::Ge(
-        //         if self.num_known_elements >= n {
-        //             self.num_known_elements
-        //         }else{
-        //             n
-        //         }
-        //     ),
-        //     NumBound::Lt(n) => NumBound::Lt(n),
-        //     NumBound::Le(n) => NumBound::Le(n),
-        //     NumBound::Unknown => NumBound::Gt(self.num_known_elements),
-        // }
+        match self.underlying_set.size(signature) {
+            NumBound::Eq(n) => NumBound::Eq(n),
+            NumBound::Range(r) => (
+                r & NumRange(
+                    NumRangeBoundary::Closed(Number::Ordinal(self.num_known_elements)),
+                    NumRangeBoundary::Unbounded
+                )
+            ).unwrap(),
+        }
+    }
+
+    #[inline]
+    fn contains_set_element(&self,set: &Set,element: &crate::SetElement,signature: &mut Vec<u64>) -> LBool {
+        self.underlying_set.contains_set_element(set, element, signature)
     }
 }

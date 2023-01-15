@@ -11,7 +11,22 @@ mod logic;
 /// Like a react router
 /// Outer layers are responsible for maintaining consistency with inner structures
 pub use operation::{BinaryOperation, UnaryOperation};
-pub use item::{Item, ItemType};
+pub use item::Item;
 pub use set_element::SetElement;
-pub use set::{Set, SetType};
-pub use logic::LBool;
+pub use set::{
+    HasSetElement,
+    HasSize,
+    UnionSet,
+    Set,
+    SetType,
+    WithItems,
+    WithoutItems
+};
+pub use logic::{
+    AssertionResponse,
+    LBool,
+    Number,
+    NumBound,
+    NumRange,
+    NumRangeBoundary,
+};

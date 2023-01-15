@@ -4,8 +4,10 @@ use std::iter::Peekable;
 use lazymath::abstract_algebra::FutureValue;
 use lazymath::abstract_algebra::FutureStructBinding;
 use zsft::BinaryOperation;
+use zsft::Item;
 use zsft::Set;
 use zsft::SetElement;
+use zsft::WithItems;
 
 use crate::lexical_analysis::TokenType;
 use crate::lexical_analysis::Token;
@@ -102,7 +104,9 @@ impl StructSignature {
                     let future_set_clone = future_set.clone();
                     let future_struct_binding = FutureStructBinding::Element(FutureValue::new(
                         Box::new(move || {
-                            SetElement::element_of(&future_set_clone.get().unwrap())
+                            let item = Item::new();
+                            WithItems::assert_on(&future_set_clone.get().unwrap(), vec![&item]).expect();
+                            item
                         }))
                     );
                     

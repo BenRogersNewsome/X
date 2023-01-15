@@ -2,15 +2,13 @@ use std::{ops::Deref, fmt::Debug};
 
 use crate::Set;
 
-
+#[derive(Clone)]
 pub struct BinaryOperation(pub(crate) BinaryOperationDefinition, u64);
 
 impl PartialEq for BinaryOperation {
     
     fn eq(&self, other: &Self) -> bool {
-        let raw_self: *const Self = self;
-        let raw_other: *const Self = other;
-        raw_self == raw_other
+        self.1 == other.1
     }
 
     fn ne(&self, other: &Self) -> bool {
@@ -35,7 +33,7 @@ impl Deref for BinaryOperation {
 
 impl Debug for BinaryOperation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!();
+        f.write_str(&format!("Binary Operation: {}", self.1))?;
         Ok(())
     }
 }

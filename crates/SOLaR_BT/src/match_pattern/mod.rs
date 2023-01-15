@@ -29,7 +29,7 @@ pub fn apply<
     let mut results: Vec<MatcherResult<'b, T>> = Vec::new();
 
     for (position, tree_token) in tree.iter().enumerate() {
-        active_patterns.push(ActivePattern::new(pattern_tokens.clone(), position, &tree));
+        active_patterns.push(ActivePattern::new(pattern_tokens.clone(), position, tree));
 
         active_patterns = active_patterns.into_iter().filter_map(|active_pattern| {
             match active_pattern.continue_pattern(tree_token) {

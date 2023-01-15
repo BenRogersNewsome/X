@@ -57,7 +57,7 @@ impl StructSignature {
         for (bind_to, bind_from) in zip(self.bindings, math_structure_instance.bindings.into_iter().skip(1)) {
             match (bind_to, bind_from) {
                 (StructSignatureBinding::Element(to), StructBinding::Element(from)) => { 
-                    try_add_to_scope![scope, to.lexeme, ScopedItem::SetElement(from)]; },
+                    try_add_to_scope![scope, to.lexeme, ScopedItem::Item(from)]; },
                 (StructSignatureBinding::Operation(to), StructBinding::Operation(from)) => { 
                     try_add_to_scope![scope, to.to_bytes(), ScopedItem::BinaryOperation(from)]; },
                 _ => {todo!("Raise mismatch error")},

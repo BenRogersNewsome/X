@@ -1,11 +1,42 @@
-use std::ops::BitAnd;
-
+use std::ops::{BitAnd, Add, BitOr};
+use std::vec::Vec;
 use super::{traits::{LEq, LOrd}, l_bool::LBool};
 
+////////////////////////////////////////////////////////////////////////////////
+// Number
+////////////////////////////////////////////////////////////////////////////////
+
+/// A generalized number, containing both the cardinal and the ordinal numbers.
+/// 
+/// Both numbers are indexed by a usize. For example:
+/// ```
+/// let one = Number::Ordinal(1)
+/// let two = Number::Ordinal(2)
+/// // etc ...
+/// 
+/// let aleph_null = Number::Cardinal(0)
+/// let aleph_one = Number::Cardinal(1)
+/// // etc ...
+/// ```
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Number {
     Ordinal(usize),
     Cardinal(usize),
+}
+
+impl Add for Number {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        use Number::*;
+        match (self, rhs) {
+            (Ordinal(a), Ordinal(b)) => Ordinal(a + b),
+
+            // TODO: Is this right?
+            (Cardinal(a), Cardinal(b)) => Cardinal(std::cmp::max(a, b)),
+            (Cardinal(a), Ordinal(_)) |
+            (Ordinal(_), Cardinal(a)) => Cardinal(a),
+        }
+    }
 }
 
 use Number::*;
@@ -28,6 +59,10 @@ impl Ord for Number {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Number Ranges and Boundaries
+////////////////////////////////////////////////////////////////////////////////
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NumRangeBoundary<T: Clone> {
     Open(T),
@@ -38,7 +73,105 @@ pub enum NumRangeBoundary<T: Clone> {
 impl <T: Copy> Copy for NumRangeBoundary<T> {}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct NumRange<T: Clone>(NumRangeBoundary<T>, NumRangeBoundary<T>);
+pub struct NumRange<T: Clone>(pub NumRangeBoundary<T>, pub NumRangeBoundary<T>);
+
+impl<T: Clone + PartialOrd + Ord> NumRange<T> {
+
+    /// Create a single `NumRange` (where possible) which is valid for the span
+    /// of the two given `NumRange`s. I.e.
+    ///     ◐------◐ 
+    ///        ◐-------◐
+    /// =>  ◐----------◐ 
+    pub fn union(&self, other: &Self) -> Option<NumBound<T>> {
+
+        let NumRange(l1, u1) = self;
+        let NumRange(l2, u2) = other;
+        
+        // Take lowest lower bound
+        let result_lower: NumRangeBoundary<T> = match (l1, l2) {
+            (Unbounded, _) | (_, Unbounded) => Unbounded,
+            (Open(a), Closed(b)) | 
+            (Closed(b), Open(a)) =>
+                if a < b {
+                    Open(a.clone())
+                } else {
+                    Closed(b.clone())
+                },
+            (Closed(a), Closed(b)) =>
+                Closed(std::cmp::min(a, b).clone()),
+            (Open(a), Open(b)) =>
+                Open(std::cmp::min(a, b).clone()),
+        };
+
+        // Take highest upper bound
+        let result_upper = match (u1, u2) {
+            (Unbounded, _) | (_, Unbounded) => Unbounded,
+            (Open(a), Closed(b)) |
+            (Closed(b), Open(a)) =>
+                if a > b {
+                    Open(a.clone())
+                } else {
+                    Closed(b.clone())
+                },
+            (Closed(a), Closed(b)) =>
+                Closed(std::cmp::max(a, b).clone()),
+            (Open(a), Open(b)) =>
+                Open(std::cmp::max(a, b).clone()),
+        };
+
+        NumBound::from_range(result_lower, result_upper)
+
+    }
+}
+
+impl<T: Clone + Add<Output=T>> NumRange<T> {
+    
+    /// For two `NumRanges` representing the possible values of the numbers `x`
+    /// and `y`, create a third `NumRange` representing the possible values of
+    /// the value `x+y`
+    pub fn sum(self, other: Self) -> NumRange<T> {
+        
+        let new_lower = match (self.0, other.0) {
+            (Open(a), Closed(b) | Open(b)) |
+            (Closed(b) | Open(b), Open(a)) =>
+                Open(a + b),
+            (Closed(a), Closed(b)) =>
+                Closed(a+b),
+            (Unbounded, x) |
+            (x, Unbounded) => x,
+        };
+
+        let new_upper = match (self.1, other.1) {
+            (Open(a), Closed(b) | Open(b)) |
+            (Closed(b) | Open(b), Open(a)) =>
+                Open(a + b),
+            (Closed(a), Closed(b)) =>
+                Closed(a+b),
+            (Unbounded, x) |
+            (x, Unbounded) => x,
+        };
+
+        NumRange(new_lower, new_upper)
+    }
+
+    pub fn shifted_up(&self, n: T) -> Self {
+        use NumRangeBoundary::*;
+        let shifted_lower = match &self.0 {
+            Open(a) => Open(a.clone()+n.clone()),
+            Closed(a) => Open(a.clone()+n.clone()),
+            Unbounded => Closed(n.clone()),
+        };
+
+        let shifted_upper = match &self.0 {
+            Open(a) => Open(a.clone()+n),
+            Closed(a) => Open(a.clone()+n),
+            Unbounded => Unbounded,
+        };
+
+        Self(shifted_lower, shifted_upper)
+    }
+
+}
 
 impl <T: Copy> Copy for NumRange<T> {}
 
@@ -94,7 +227,41 @@ impl<T: PartialEq + Ord + Clone> NumRange<T> {
             (Open(a), Open(b)) => Open(std::cmp::min(a, b).clone()),
         };
 
-        match (result_lower, result_upper) {
+        NumBound::from_range(result_lower, result_upper)
+
+    }
+
+}
+
+impl<T: Clone + Ord + PartialEq> BitAnd for NumRange<T> {
+    type Output = Option<NumBound<T>>;
+    fn bitand(self, rhs: Self) -> Self::Output {
+        self.combine(&rhs)
+    }
+}
+
+impl<T: Clone + Add<Output=T>> Add for NumRange<T> {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        self.sum(rhs)
+    }
+}
+
+use NumRangeBoundary::*;
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum NumBound<T: Clone> {
+    Eq(T),
+    Range(NumRange<T>),
+}
+
+impl<T: Clone + PartialOrd> NumBound<T> {
+
+    /// Attempt to construct a `NumBound` from a pair of range boundaries. Will
+    /// return `None` if the resulting range would be invalid (i.e. the lower
+    /// bound would be greater than the upper bound).
+    pub fn from_range(lower: NumRangeBoundary<T>, upper: NumRangeBoundary<T>) -> Option<Self> {
+        match (lower, upper) {
             (Open(l) | Closed(l), Open(u) | Closed(u)) if u < l =>
                 None,
             (Open(l), Open(u)) if u <= l =>
@@ -104,17 +271,22 @@ impl<T: PartialEq + Ord + Clone> NumRange<T> {
             (result_lower, result_upper) =>
                 Some(Range(NumRange(result_lower, result_upper)))
         }
-
     }
-
 }
 
-use NumRangeBoundary::*;
+impl<T: Clone + Add<Output=T>> NumBound<T> {
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum NumBound<T: Clone> {
-    Eq(T),
-    Range(NumRange<T>),
+    /// For two `NumBound`s representing the possible values of the numbers `x`
+    /// and `y`, create a third `NumBound` representing the possible values of
+    /// the value `x+y`
+    pub fn sum(self, other: Self) -> Self {
+        match (self, other) {
+            (Eq(a), Eq(b)) => Eq(a + b),
+            (Eq(a), Range(r)) |
+            (Range(r), Eq(a)) => Range(r.shifted_up(a)),
+            (Range(r1), Range(r2)) => Range(r1 + r2),
+        }
+    }
 }
 
 impl <T: Copy> Copy for NumBound<T> {}
@@ -338,6 +510,73 @@ impl<T: PartialEq + Ord + Clone> BitAnd for NumBound<T> {
                 },
             (Range(a), Range(b)) =>
                 a.combine(&b),
+        }
+    }
+}
+
+impl<T: Clone + Add<Output=T>> Add for NumBound<T> {
+    type Output = NumBound<T>;
+    fn add(self, rhs: Self) -> Self::Output {
+        self.sum(rhs)
+    }
+}
+
+/// The union of two NumBounds together calculates the `NumBound` which describes a
+/// number which resides in either or both of the individual `NumBound`s. In some
+/// cases, the given `NumBound`s cannot be combined in this way (i.e. they are
+/// disjoint) in which case `None` is returned.
+impl<T: PartialEq + Ord + Clone> BitOr for NumBound<T> {
+    type Output = Option<NumBound<T>>;
+    fn bitor(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Eq(a), Eq(b)) =>
+                if a == b {
+                    Some(Eq(a))
+                } else {
+                    None
+                },
+            (Eq(a), Range(NumRange(l, u))) |
+            (Range(NumRange(l, u)), Eq(a)) => {
+                let new_lower = match (&l, &a) {
+                    (Open(x), a) => 
+                        if a > x {
+                            Open(x.clone())
+                        } else if a == x {
+                            Closed(x.clone())
+                        } else {
+                            return None;
+                        }
+                    (Closed(x), a) => {
+                        if a >= x {
+                            Closed(x.clone())
+                        } else {
+                            return None;
+                        }
+                    },
+                    (Unbounded, _) => Unbounded,
+                };
+                let new_upper = match (&u, &a) {
+                    (Open(x), a) => 
+                        if a < x {
+                            Open(x.clone())
+                        } else if a == x {
+                            Closed(x.clone())
+                        } else {
+                            return None;
+                        }
+                    (Closed(x), a) => {
+                        if a <= x {
+                            Closed(x.clone())
+                        } else {
+                            return None;
+                        }
+                    },
+                    (Unbounded, _) => Unbounded,
+                };
+                NumBound::from_range(new_lower, new_upper)
+            },
+            (Range(a), Range(b)) => 
+                a.union(&b),
         }
     }
 }

@@ -1,6 +1,3 @@
-use std::hash::{Hasher, Hash};
-use std::collections::hash_map::DefaultHasher;
-
 use solar_bt::{apply, MatcherResult, Node};
 use zsft::{SetElement, BinaryOperation, UnaryOperation};
 use crate::manipulation::Manipulatable;
@@ -11,15 +8,15 @@ use super::identity::Identity;
 use super::token_tree::VecTree;
 
 
-pub type Expression<'a> = VecTree<&'a SetElement<'a>, &'a BinaryOperation, &'a UnaryOperation>;
+pub type Expression = VecTree<SetElement, BinaryOperation, UnaryOperation>;
 
 pub enum ExpressionManipulationError {
     Error,
 }
 
-impl<'a> Manipulatable<'a> for Expression<'a> {
-    type Identity = Identity<'a>;
-    type Instruction = (usize, &'a Identity<'a>);
+impl<'a> Manipulatable<'a> for Expression {
+    type Identity = Identity;
+    type Instruction = (usize, &'a Identity);
     type Error = ExpressionManipulationError;
 
     fn manipulate(&self, _instruction: &'a Self::Instruction) -> Result<Option<Self>, Self::Error> {
@@ -56,7 +53,7 @@ impl<'a> Manipulatable<'a> for Expression<'a> {
     }
 }
 
-impl<'a> Simplifiable<'a> for Expression<'a> {
+impl<'a> Simplifiable<'a> for Expression {
     fn simplicity(&self) -> usize {
         self.nodes.len()
     }
@@ -69,7 +66,9 @@ impl<'a> Simplifiable<'a> for Expression<'a> {
                     Node::Binary(x) => x.id(),
                     Node::Leaf(x) => x.id(),
                 }
-            }).sum()
+            }).reduce(|accum, i| {
+                accum.overflowing_add(i).0
+            }).unwrap()
     }
 }
 

@@ -6,6 +6,11 @@ use crate::{syntactic_analysis::ast::{NodeParseError, NodeVisitationError}, Scop
 
 use super::{Identifier, expect_token};
 
+
+mod assertion_block;
+mod assertion_element_declaration;
+
+
 pub enum AssertionType {
     In(Identifier),
 }
@@ -46,20 +51,18 @@ impl Assertion {
             None => return Err(NodeVisitationError::CantResolveToken(set_ident.clone().into()))
         };
 
-        let set_element: SetElement = match scope.get(&self.item.lexeme) {
-            Some(ScopedItem::SetElement(element)) => element.clone(),
-            Some(ScopedItem::Expression(expr)) => expr.to_set_element(),
+        let assertion_val: LBool = match scope.get(&self.item.lexeme) {
+            Some(ScopedItem::SetElement(element)) => element.in_set(&set),
+            Some(ScopedItem::Expression(expr)) => expr.to_set_element().in_set(&set),
+            Some(ScopedItem::Item(item)) => set.contains(*item),
             Some(x) => return Err(NodeVisitationError::UnexpectedRegisteredItem(x.to_owned())),
             None => return Err(NodeVisitationError::CantResolveToken(self.item.clone().into()))
         };
 
-        let assertion_val = set.contains(&set_element);
         if assertion_val == LBool::False {
             panic!("Assertion failed")
         }else if assertion_val == LBool::Unknown {
-
-            
-
+            // TODO
         };
 
         Ok(())
